@@ -37,7 +37,7 @@ int main()
 				break; 
 			case  2:
 				//对应的工程
-				printf("景区景点分布图");
+				printGraph(&graph);
 				break; 
 			case  3:
 				//对应的工程
