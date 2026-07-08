@@ -25,4 +25,6 @@ typedef struct stGraph{
 	int edgnum;
 }ALGraph;  //ALGraph 图的邻接表
 
+int locate(ALGraph graph,char * e);//定位 
+
 #endif

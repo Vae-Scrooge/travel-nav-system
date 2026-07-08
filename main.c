@@ -4,6 +4,7 @@
 
 int main()
 {
+	ALGraph graph; 
 	int opt = 0;  
 	char buf[100]; 
 	showMenu(); 
@@ -32,7 +33,7 @@ int main()
 				return 0;
 			case  1:
 				//对应的工程
-				printf("创建景区景点图");
+				createGraph(&graph);
 				break; 
 			case  2:
 				//对应的工程
