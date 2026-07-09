@@ -13,5 +13,7 @@ int islooptest(); //是否有回路
 //查询最短距离
 void minDistance(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM]); 
 
+//获取两个顶点间的边长 
+int getlength(ALGraph graph,int i,int j);
 
 #endif

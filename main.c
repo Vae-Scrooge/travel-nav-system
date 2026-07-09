@@ -4,10 +4,8 @@
 
 int main()
 {
-	char e1[10];
-	char e2[10];
-	
-	ALGraph graph; 
+	ALGraph graph;
+	ALGraph guidegraph; 
 	int opt = 0;  
 	char buf[100]; 
 	showMenu(); 
@@ -35,30 +33,23 @@ int main()
 			case 0:
 				return 0;
 			case  1:
-				//对应的工程
+				//创建景区景点图
 				createGraph(&graph);
 				break; 
 			case  2:
-				//对应的工程
+				//景区景点分布图
 				printGraph(&graph);
 				break; 
 			case  3:
-				//对应的工程
-				//printf("导游路线");
-				
-				printf("输入两个顶点名称：");
-				scanf("%s %s",e1,e2); 
-				if(isedg(graph,e1,e2))
-					printf("右边");
-				else
-					printf("五边");
+				//导游路线
+				createGuideGraph(&graph,&guidegraph);
 				break; 
 			case  4:
-				//对应的工程
+				//导游路线中的回路
 				printf("游路线中的回路");
 				break; 
 			case  5:
-				//对应的工程
+				//两个景点间的最短路径和距离
 				printf("两个景点间的最短路径和距离");
 				break;	
 		} 

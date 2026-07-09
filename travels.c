@@ -2,7 +2,6 @@
 
 int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
 char path[MAXNUM][10];  //存储遍历过程中顺序 访问的景点名称   
-int index = 0;
 CNode *p;
 //深度优先遍历
 void DFSTraverse(ALGraph graph)
@@ -22,11 +21,12 @@ void DFSTraverse(ALGraph graph)
 		}
 	}
 } 
+int index = 0;
 //深度遍历递归
 void DFS(ALGraph graph,int i)
 {
     visited[i] = 1; //标记第i节点已经访问
-	strcmp(path[index++],graph.roadlist[i].data);//复制访问节点的名称到访问数组中 
+	strcpy(path[index++],graph.roadlist[i].data);//复制访问节点的名称到访问数组中 
 	//printf("-->%s",graph.roadlist[i].data); 
 	//查找访问节点的邻接顶点是否已经访问，没有访问的话继续采用深度优先遍历形式进行访问
 	for(p=graph.roadlist[i].first;p!=NULL;p=p->next)
@@ -34,7 +34,7 @@ void DFS(ALGraph graph,int i)
 		if(!visited[p->index])
 		{
 			DFS(graph,p->index);
-		//	p = graph.roadlist[i].first;  //应该是 graph.roadlist[i].first 还是 graph.roadlist[p->index].first 还是可以不需要这条语句 
+			p = graph.roadlist[i].first;   //防递归回去时候出现空指针 
 		}
 	} 
 } 
@@ -53,6 +53,21 @@ int isedg(ALGraph graph,char * e1,char * e2)
 	}
 	return 0;
 } 
+
+//获取两个顶点间的边长 
+int getlength(ALGraph graph,int i,int j)
+{
+	for(p=graph.roadlist[i].first;p!=NULL;p=p->next)
+	{
+		if(p->index == j)
+		{
+			return p->length;
+		}
+	}
+	return 0;
+} 
+
+
 //计算最短路径 
 void shortPath(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM])
 {
