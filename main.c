@@ -4,6 +4,9 @@
 
 int main()
 {
+	char e1[10];
+	char e2[10];
+	
 	ALGraph graph; 
 	int opt = 0;  
 	char buf[100]; 
@@ -41,7 +44,14 @@ int main()
 				break; 
 			case  3:
 				//对应的工程
-				printf("导游路线");
+				//printf("导游路线");
+				
+				printf("输入两个顶点名称：");
+				scanf("%s %s",e1,e2); 
+				if(isedg(graph,e1,e2))
+					printf("右边");
+				else
+					printf("五边");
 				break; 
 			case  4:
 				//对应的工程

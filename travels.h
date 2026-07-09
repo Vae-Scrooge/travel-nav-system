@@ -4,7 +4,7 @@
 #include "global.h"
 
 
-void DFSTravels(ALGraph graph);//深度优先遍历
+void DFSTraverse(ALGraph graph);//深度优先遍历
 void DFS(ALGraph graph,int i); //深度遍历递归
 int isedg(ALGraph graph,char * e1,char * e2);//是否是边
 void shortPath(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM]); //计算最短路径 
