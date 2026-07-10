@@ -11,7 +11,7 @@ void createGraph(ALGraph * graph)
 	
 	for(i=0;i<graph->nodenum;i++) //录入景点 
 	{
-		printf("请输入第%d个景点名称",i);
+		printf("请输入第%d个景点名称:",i);
 		scanf("%s",graph->roadlist[i].data);
 		graph->roadlist[i].first = NULL;
 	} 
@@ -148,20 +148,22 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 			int m = k+2;
 			if(m<=n)
 			{
-				j = locate(*graph,guidePath[m]);
-				while(visited[j])
+				while(visited[locate(*graph,guidePath[m])])
 				{
 					if(isedg(*graph,guidePath[k],guidePath[m]))
 					{
+						j = locate(*graph,guidePath[m]);
 						visited[j] = 1;
 						visited[i] = 1;
 						node1 = (CNode *) malloc(sizeof(CNode));
-					 	node2= (CNode *) malloc(sizeof(CNode));
+//					 	node2= (CNode *) malloc(sizeof(CNode));
 					 	node1->index = j;
 					 	node1->length = getlength(*graph,i,j);
-					 	node2->next = guidgraph->roadlist[i].first;
+					 	node1->next = guidgraph->roadlist[i].first;
 					 	guidgraph->roadlist[i].first = node1;
-						node1->next = node2;
+//					 	node2->next = guidgraph->roadlist[i].first;
+//					 	guidgraph->roadlist[i].first = node1;
+//						node1->next = node2;
 						edgnum ++ ;
 					}
 					if(++m>=n)
@@ -172,16 +174,17 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 			}
 		}else
 		{
-			printf("游览《%s》\t",guidgraph->roadlist[j].data);
 			visited[j] = 1;
 			visited[i] = 1;
 			node1 = (CNode *) malloc(sizeof(CNode));
-		 	node2= (CNode *) malloc(sizeof(CNode));
+//		 	node2= (CNode *) malloc(sizeof(CNode));
 		 	node1->index = j;
 		 	node1->length = getlength(*graph,i,j);
-		 	node2->next = guidgraph->roadlist[i].first;
+		 	node1->next = guidgraph->roadlist[i].first;
 		 	guidgraph->roadlist[i].first = node1;
-			node1->next = node2;
+//		 	node2->next = guidgraph->roadlist[i].first;
+//		 	guidgraph->roadlist[i].first = node1;
+//			node1->next = node2;
 			edgnum ++ ;
 		}		
 	}

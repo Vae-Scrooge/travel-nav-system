@@ -35,22 +35,28 @@ int main()
 			case  1:
 				//创建景区景点图
 				createGraph(&graph);
+				printf("\n");
 				break; 
 			case  2:
 				//景区景点分布图
 				printGraph(&graph);
+				printf("\n");
 				break; 
 			case  3:
 				//导游路线
 				createGuideGraph(&graph,&guidegraph);
+				printf("\n");
 				break; 
 			case  4:
 				//导游路线中的回路
-				printf("游路线中的回路");
+//				printGraph(&guidegraph);
+				islooptest(graph); 
+				printf("\n");
 				break; 
 			case  5:
 				//两个景点间的最短路径和距离
 				printf("两个景点间的最短路径和距离");
+				printf("\n");
 				break;	
 		} 
 	}
