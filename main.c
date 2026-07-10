@@ -8,6 +8,8 @@ int main()
 	ALGraph guidegraph; 
 	int opt = 0;  
 	char buf[100]; 
+	int path[MAXNUM][MAXNUM];  //存的是i到j两个顶点的最短路径（顶点序列）
+	double shortpath[MAXNUM][MAXNUM]; //保存的是i到j两个顶点最短路径的权重（比如公里数）
 	showMenu(); 
 	while(2)
 	{
@@ -49,13 +51,13 @@ int main()
 				break; 
 			case  4:
 				//导游路线中的回路
-//				printGraph(&guidegraph);
-				islooptest(graph); 
+				printGraph(&guidegraph);
+				islooptest(guidegraph); 
 				printf("\n");
 				break; 
 			case  5:
 				//两个景点间的最短路径和距离
-				printf("两个景点间的最短路径和距离");
+				minDistance(graph,path,shortpath); 
 				printf("\n");
 				break;	
 		} 

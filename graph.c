@@ -1,6 +1,8 @@
 #include "graph.h"
 #include "travels.h"
 
+double **parray; 
+
 //创建图的邻接表
 void createGraph(ALGraph * graph)
 {
@@ -43,7 +45,8 @@ void printGraph(ALGraph * graph)
 {
 	int i=0,j=0;
 	//就是创建矩阵（也就二维数组） 
-	double **parray = (double *)malloc(sizeof(double)*graph->nodenum); 
+	//double **parray = (double *)malloc(sizeof(double)*graph->nodenum); 
+	parray = (double *)malloc(sizeof(double)*graph->nodenum); 
 	CNode *p = (CNode *)malloc(sizeof(CNode)); 
 	for(i=0;i<graph->nodenum;i++)
 	{
@@ -89,7 +92,7 @@ void printGraph(ALGraph * graph)
 		printf("\n");
 	}
 	free(p);
-	free(parray);	
+//	free(parray);	
 }
 
 int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
@@ -113,7 +116,7 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 		flag = 1;
 		while(flag)
 		{
-			guidePath[n++] = path[i+k];
+			guidePath[n++] = path[i+k];  //path保存的是深度优先访问的经典序列 
 			if(isedg(*graph,path[i+k],path[i+1]))
 			{
 				flag = 0;

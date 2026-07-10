@@ -3,6 +3,7 @@
 int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
 char path[MAXNUM][10];  //存储遍历过程中顺序 访问的景点名称   
 CNode *p;
+extern double **parray; 
 typedef char str[10];
 //深度优先遍历
 void DFSTraverse(ALGraph graph)
@@ -69,14 +70,53 @@ int getlength(ALGraph graph,int i,int j)
 } 
 
 
-//计算最短路径 
+//计算最短路径  path 保存的是i到j两个顶点的最短路径（顶点序列）   shortpath 保存的是i到j两个顶点最短路径的权重（比如公里数） 
 void shortPath(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM])
 {
-
+	int i=0;
+	int j=0;
+	int k=0; 
+	for(i=0;i<graph.nodenum;i++)
+	{
+		for(j=0;j<graph.nodenum;j++)
+		{
+			shortpath[i][j] = parray[i][j];//邻接矩阵的边长初始化到最短距离的二维数据
+			if(parray[i][j]<INF) //表示i顶点到j顶点有边 
+			{
+				path[i][j] = i;
+			} 
+		}
+	}
+	//计算任意两点间的最短距离 
+	for(i=0;i<graph.nodenum;i++)
+	{
+		for(j=0;j<graph.nodenum;j++)
+		{
+			for(k=0;k<graph.nodenum;k++)
+			{
+				
+				if((shortpath[i][k]+shortpath[k][j])<shortpath[i][j])  //表明从i节点到j节点经过K节点会更加近 
+				{
+					shortpath[i][j] = shortpath[i][k]+shortpath[k][j]; 
+					path[i][j] = k;
+				} 
+			} 
+		}
+	}
 } 
 //显示最短路径
 void printPath(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM],int i,int j)
 {
+	printf("%s->",graph.roadlist[i].data);
+	int x = path[i][j];
+	if(x == i)
+	{
+		printf("%s",graph.roadlist[j].data);
+	}else
+	{
+		printPath(graph,path,shortpath,i,x);
+		printPath(graph,path,shortpath,x,j);
+	}
 } 
 //是否有回路
 int islooptest(ALGraph graph)
@@ -105,7 +145,7 @@ int islooptest(ALGraph graph)
 	//找出入度为0的顶点，保存到 degarr 中
 	for(i=0;i<graph.nodenum;i++)
 	{
-		if(indegree[i]==1)
+		if(indegree[i]==0)
 		{
 			degarr[top++] = i;
 		}	 
@@ -120,7 +160,7 @@ int islooptest(ALGraph graph)
 		for(p=graph.roadlist[j].first;p!=NULL;p=p->next)
 		{
 			indegree[p->index]--;
-			if(indegree[p->index] == 1)  
+			if(indegree[p->index] == 0)  
 				degarr[top++] = p->index;
 		}
 	  } 
@@ -148,5 +188,18 @@ int islooptest(ALGraph graph)
 //查询最短距离
 void minDistance(ALGraph graph,int path[][MAXNUM],double shortpath[][MAXNUM])
 {
-	
+	char start[10];
+	char end[10];
+	int i=0;
+	int j=0;
+	//查询之前先计算任意两点间的最短距离
+	shortPath(graph,path,shortpath); 
+	printf("请输入要查询的两个景点名称：\n");
+	scanf("%s",start);
+	scanf("%s",end);
+	i = locate(graph,start);
+	j = locate(graph,end);
+	printf("<%s>与<%s>间的距离是：%f米。\n",start,end,shortpath[i][j]);
+	printf("<%s>与<%s>间的路径：\n",start,end);
+	printPath(graph,path,shortpath,i,j);
 }
