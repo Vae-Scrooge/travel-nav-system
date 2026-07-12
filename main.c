@@ -11,6 +11,11 @@ int main()
 	int path[MAXNUM][MAXNUM];  //存的是i到j两个顶点的最短路径（顶点序列）
 	double shortpath[MAXNUM][MAXNUM]; //保存的是i到j两个顶点最短路径的权重（比如公里数）
 	
+	//加载图
+	loadGraph(&graph); 
+	//把景区路由图中景点间的边存到二维数组 
+	transToMatrix(&graph);
+	
 	if(usermenu()==0)//退出系统 
 		return 0;
 		
@@ -41,6 +46,9 @@ int main()
 			case  1:
 				//创建景区景点图
 				createGraph(&graph);
+				//保存图 
+				saveGraph(&graph);
+				transToMatrix(&graph); 
 				printf("\n");
 				break; 
 			case  2:

@@ -5,11 +5,12 @@ int loginsys() //1 登录成功  0 退出系统
 	char username[COLUMNLENGTH];
 	char password[COLUMNLENGTH];
 	int flag = 0;
+	printf("如果忘了用户名和密码，则用户名输入0退出系统，重新注册后再登录！\n");
 	while(1)
-	{
-		printf("请输入用户名，如果不登录则输入《退出》：");
+	{		
+		printf("请输入用户名：");
 		scanf("%s",username); 
-		if(strcmp(username,"退出")==0)
+		if(strcmp(username,"0")==0)
 		{
 			break; 
 		}
@@ -80,7 +81,7 @@ int validateUser(char username[COLUMNLENGTH],char password[COLUMNLENGTH]) //返回
 		printf("文件打开失败！\n");
 		return;
 	}
-	while(fscanf(fp,"%s %s",fusername,fpassword)!=EOF){
+	while(fscanf(fp,"%s %s\n",fusername,fpassword)!=EOF){
 		if(strcmp(username,fusername) == 0)
 		{
 			break;
@@ -121,7 +122,7 @@ int usermenu()
 			printf("你输入的数字有错误，请重新输入你的选择：");
 			scanf("%s",buf);
 		}else{				
-			opt = atoi(&buf[0]);
+			opt = atoi(buf);
 		}
 		switch(opt)
 		{
@@ -135,7 +136,9 @@ int usermenu()
 		}
 		
 		if(flag == 0 || flag == 1)
+		{
 			break;
+		} 			
 	}
 	return flag;
 }

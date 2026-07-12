@@ -1,1 +1,2 @@
 admin 123456
+xiaoming 123456
