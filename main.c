@@ -10,6 +10,10 @@ int main()
 	char buf[100]; 
 	int path[MAXNUM][MAXNUM];  //存的是i到j两个顶点的最短路径（顶点序列）
 	double shortpath[MAXNUM][MAXNUM]; //保存的是i到j两个顶点最短路径的权重（比如公里数）
+	
+	if(usermenu()==0)//退出系统 
+		return 0;
+		
 	showMenu(); 
 	while(2)
 	{
