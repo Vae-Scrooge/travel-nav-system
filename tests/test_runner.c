@@ -371,6 +371,7 @@ static void test_password_vectors_and_error_paths(void)
         assert(verifyPassword("sp3c!@l chars", hash));
         assert(!hashPassword("secret", NULL, hash, sizeof(hash)));
         assert(!hashPassword("secret", "SaltSaltSalt1234", NULL, sizeof(hash)));
+        assert(!hashPassword("secret", "SaltSaltSalt1234", hash, 0));
         assert(!hashPassword("secret", "SaltSaltSalt1234", smallOutput, sizeof(smallOutput)));
         assert(!generatePasswordSalt(NULL, PASSWORD_SALT_SIZE));
         assert(!verifyPassword(NULL, expected));

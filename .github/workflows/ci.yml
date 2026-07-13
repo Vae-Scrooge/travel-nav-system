@@ -26,12 +26,12 @@ jobs:
       - name: Coverage
         run: |
           make coverage
-          gcovr --print-summary --fail-under-line 80 --fail-under-branch 80
-          gcovr --filter '.*graph\.c' --fail-under-line 90
-          gcovr --filter '.*travels\.c' --fail-under-line 90
-          gcovr --filter '.*userManager\.c' --fail-under-line 90
-          gcovr --filter '.*password\.c' --fail-under-line 90
-          gcovr --filter '.*stats\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --print-summary --fail-under-line 80 --fail-under-branch 80
+          gcovr --config .gcovr.cfg --filter '.*graph\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --filter '.*travels\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --filter '.*userManager\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --filter '.*password\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --filter '.*stats\.c' --fail-under-line 90
 
       - name: Static analysis
         run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 .
