@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make gcovr cppcheck
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
+
+      - name: Coverage
+        run: |
+          make coverage
+          gcovr --print-summary --fail-under-line 80 --fail-under-branch 80
+          gcovr --filter '.*graph\.c' --fail-under-line 90
+          gcovr --filter '.*travels\.c' --fail-under-line 90
+          gcovr --filter '.*userManager\.c' --fail-under-line 90
+          gcovr --filter '.*password\.c' --fail-under-line 90
+          gcovr --filter '.*stats\.c' --fail-under-line 90
+
+      - name: Static analysis
+        run: cppcheck --enable=warning,style,performance,portability --error-exitcode=1 .

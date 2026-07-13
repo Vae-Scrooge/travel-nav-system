@@ -8,6 +8,7 @@
 #include "menu.h"
 #include "graph.h"
 #include "userManager.h"
+#include "stats.h"
 
 
 

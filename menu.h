@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
-void showMenu(); //显示功能选项
+void showMenu(void);
+void showHelpMenu(void);
 
 #endif

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define MAXNUM 100
 #define INF  32767
@@ -12,19 +13,21 @@ typedef struct stCNode{
 	int index;
 	struct stCNode * next;
 	int length;
-}CNode;  //边节点信息
+}CNode;  // Edge node information
 
 typedef struct stHNode{
 	char data[10];
 	CNode * first;
-}HNode,RoadList[MAXNUM];   //顶点信息 
+}HNode,RoadList[MAXNUM];   // Vertex information
 
 typedef struct stGraph{
 	RoadList roadlist;
 	int nodenum;
 	int edgnum;
-}ALGraph;  //ALGraph 图的邻接表
+}ALGraph;  // Adjacency-list graph
 
-int locate(ALGraph graph,char * e);//定位 
+int locate(ALGraph graph, const char *e);
+int readString(char *buffer, size_t size);
+int readInt(int *value);
 
 #endif

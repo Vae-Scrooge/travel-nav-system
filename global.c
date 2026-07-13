@@ -1,9 +1,12 @@
 #include "global.h"
 
-//¶¨Î»
-int locate(ALGraph graph,char * e)
+int locate(ALGraph graph, const char *e)
 {
 	int i=0;
+        if(e == NULL)
+        {
+                return -1;
+        }
 	for(i=0;i<graph.nodenum;i++)
 	{
 		if(strcmp(e,graph.roadlist[i].data)==0)
@@ -11,5 +14,6 @@ int locate(ALGraph graph,char * e)
 			return i;
 		}
 	}
-	return 0;
+        return -1;
 }
+

@@ -1,119 +1,293 @@
 #include "graph.h"
 #include "travels.h"
 
-double **parray; 
-int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
-extern char path[MAXNUM][10];  //存储遍历过程中顺序 访问的景点名称  
+double **parray = NULL;
+static int matrixNodeCount = 0;
+extern char path[MAXNUM][10];
 char * guidePath[2 * MAXNUM];
 
+void initGraph(ALGraph *graph)
+{
+        int i = 0;
+        if(graph == NULL)
+        {
+                return;
+        }
+        graph->nodenum = 0;
+        graph->edgnum = 0;
+        for(i = 0; i < MAXNUM; i++)
+        {
+                graph->roadlist[i].data[0] = '\0';
+                graph->roadlist[i].first = NULL;
+        }
+}
 
-//创建图的邻接表
-void createGraph(ALGraph * graph)
+void freeGraph(ALGraph *graph)
 {
-	int i=0;
-	int k=0;
-	printf("请输入旅游图的景点数和边数：");
-	scanf("%d %d",&graph->nodenum,&graph->edgnum);
-	
-	for(i=0;i<graph->nodenum;i++) //录入景点 
-	{
-		printf("请输入第%d个景点名称:",i);
-		scanf("%s",graph->roadlist[i].data);
-		graph->roadlist[i].first = NULL;
-	} 
-	
-	for(k=0;k<graph->edgnum;k++) //录入边 
-	{
-		printf("请输入第%d条边的两个顶点和长度：",k);
-		int length = 0;
-		char c1[10],c2[10];
-		scanf("%s",c1);
-		scanf("%s",c2);
-		scanf("%d",&length);
-		int i = locate(*graph,c1);
-		int j = locate(*graph,c2);
-		CNode *node1 = (CNode *)malloc(sizeof(CNode));
-		CNode *node2 = (CNode *)malloc(sizeof(CNode));
-		node1->length = length;
-		node2->length = length;
-		node1->index = i;
-		node2->index = j;
-		node1->next = graph->roadlist[j].first;
-		graph->roadlist[j].first = node1;
-		node2->next = graph->roadlist[i].first;
-		graph->roadlist[i].first = node2;
-	} 
+        int i = 0;
+        if(graph == NULL)
+        {
+                return;
+        }
+        for(i = 0; i < graph->nodenum; i++)
+        {
+                CNode *p = graph->roadlist[i].first;
+                while(p != NULL)
+                {
+                        CNode *next = p->next;
+                        free(p);
+                        p = next;
+                }
+                graph->roadlist[i].first = NULL;
+        }
+        graph->nodenum = 0;
+        graph->edgnum = 0;
 }
- //查看整个图信息
-void printGraph(ALGraph * graph)
+
+int addEdge(ALGraph *graph, int from, int to, int length)
 {
-	int i=0,j=0;
-	//就是创建矩阵（也就二维数组） 
-	//double **parray = (double *)malloc(sizeof(double)*graph->nodenum); 
-//	parray = (double *)malloc(sizeof(double)*graph->nodenum); 
-//	CNode *p = (CNode *)malloc(sizeof(CNode)); 
-//	for(i=0;i<graph->nodenum;i++)
-//	{
-//		parray[i] = (double *)malloc(sizeof(double)*graph->nodenum);
-//	}
-//	//初始化二维数组
-//	 for(i=0;i<graph->nodenum;i++)
-//	{
-//		for(j=0;j<graph->nodenum;j++)
-//		{
-//			if(i == j)
-//			{ 
-//				parray[i][j] = 0;
-//			}else
-//			{
-//				parray[i][j] = INF;
-//			}
-//		} 
-//	}
-//	//把景区路由图中景点间的边存到二维数组
-//	 for(i=0;i<graph->nodenum;i++)
-//	{		
-//		for(p=graph->roadlist[i].first;p!=NULL;p=p->next)
-//		{
-//			j = p->index;
-//			parray[i][j] = p->length;
-//		} 
-//	}
-	
-	//输出列标题  
-	 for(i=0;i<graph->nodenum;i++)
-	{
-		printf("\t%s",graph->roadlist[i].data);
-	}
-	printf("\n");
-	//输出行标题 和单元格数据 
-	for(i=0;i<graph->nodenum;i++)
-	{
-		printf("%s\t",graph->roadlist[i].data);
-		for(j=0;j<graph->nodenum;j++)
-		{
-			printf("%4.f\t",parray[i][j]);
-		} 
-		printf("\n");
-	}
-//	free(p);
-//	free(parray);	
+        CNode *node = NULL;
+        if(graph == NULL || from < 0 || to < 0 || from >= graph->nodenum || to >= graph->nodenum || length <= 0)
+        {
+                return 0;
+        }
+
+        node = (CNode *)malloc(sizeof(CNode));
+        if(node == NULL)
+        {
+                return 0;
+        }
+        node->index = to;
+        node->length = length;
+        node->next = graph->roadlist[from].first;
+        graph->roadlist[from].first = node;
+        graph->edgnum++;
+        return 1;
 }
+
+static int updateDirectedEdge(ALGraph *graph, int from, int to, int length)
+{
+        CNode *p = NULL;
+        if(graph == NULL || from < 0 || to < 0 || from >= graph->nodenum || to >= graph->nodenum || length <= 0)
+        {
+                return 0;
+        }
+        for(p = graph->roadlist[from].first; p != NULL; p = p->next)
+        {
+                if(p->index == to)
+                {
+                        p->length = length;
+                        return 1;
+                }
+        }
+        return addEdge(graph, from, to, length);
+}
+
+static int deleteDirectedEdge(ALGraph *graph, int from, int to)
+{
+        CNode *current = NULL;
+        CNode *previous = NULL;
+        if(graph == NULL || from < 0 || to < 0 || from >= graph->nodenum || to >= graph->nodenum)
+        {
+                return 0;
+        }
+        current = graph->roadlist[from].first;
+        while(current != NULL)
+        {
+                if(current->index == to)
+                {
+                        if(previous == NULL)
+                        {
+                                graph->roadlist[from].first = current->next;
+                        }
+                        else
+                        {
+                                previous->next = current->next;
+                        }
+                        free(current);
+                        graph->edgnum--;
+                        return 1;
+                }
+                previous = current;
+                current = current->next;
+        }
+        return 0;
+}
+
+int graphAddSpot(ALGraph *graph, const char *name)
+{
+        if(graph == NULL || name == NULL || name[0] == '\0')
+        {
+                return 0;
+        }
+        if(graph->nodenum >= MAXNUM || locate(*graph, name) >= 0)
+        {
+                return 0;
+        }
+        strncpy(graph->roadlist[graph->nodenum].data, name, sizeof(graph->roadlist[graph->nodenum].data) - 1);
+        graph->roadlist[graph->nodenum].data[sizeof(graph->roadlist[graph->nodenum].data) - 1] = '\0';
+        graph->roadlist[graph->nodenum].first = NULL;
+        graph->nodenum++;
+        return 1;
+}
+
+int graphRenameSpot(ALGraph *graph, const char *oldName, const char *newName)
+{
+        int index;
+        if(graph == NULL || oldName == NULL || newName == NULL || newName[0] == '\0')
+        {
+                return 0;
+        }
+        index = locate(*graph, oldName);
+        if(index < 0 || locate(*graph, newName) >= 0)
+        {
+                return 0;
+        }
+        strncpy(graph->roadlist[index].data, newName, sizeof(graph->roadlist[index].data) - 1);
+        graph->roadlist[index].data[sizeof(graph->roadlist[index].data) - 1] = '\0';
+        return 1;
+}
+
+int graphDeleteSpot(ALGraph *graph, const char *name)
+{
+        int index;
+        int i;
+        if(graph == NULL || name == NULL)
+        {
+                return 0;
+        }
+        index = locate(*graph, name);
+        if(index < 0)
+        {
+                return 0;
+        }
+
+        while(graph->roadlist[index].first != NULL)
+        {
+                CNode *next = graph->roadlist[index].first->next;
+                free(graph->roadlist[index].first);
+                graph->roadlist[index].first = next;
+                graph->edgnum--;
+        }
+
+        for(i = 0; i < graph->nodenum; i++)
+        {
+                if(i != index)
+                {
+                        while(deleteDirectedEdge(graph, i, index))
+                        {
+                        }
+                }
+        }
+
+        for(i = index; i < graph->nodenum - 1; i++)
+        {
+                graph->roadlist[i] = graph->roadlist[i + 1];
+        }
+        graph->nodenum--;
+        graph->roadlist[graph->nodenum].data[0] = '\0';
+        graph->roadlist[graph->nodenum].first = NULL;
+
+        for(i = 0; i < graph->nodenum; i++)
+        {
+                CNode *p = graph->roadlist[i].first;
+                while(p != NULL)
+                {
+                        if(p->index > index)
+                        {
+                                p->index--;
+                        }
+                        p = p->next;
+                }
+        }
+        return 1;
+}
+
+int graphAddOrUpdateRoad(ALGraph *graph, const char *fromName, const char *toName, int length)
+{
+        int from;
+        int to;
+        if(graph == NULL || fromName == NULL || toName == NULL || length <= 0)
+        {
+                return 0;
+        }
+        from = locate(*graph, fromName);
+        to = locate(*graph, toName);
+        if(from < 0 || to < 0 || from == to)
+        {
+                return 0;
+        }
+        return updateDirectedEdge(graph, from, to, length) && updateDirectedEdge(graph, to, from, length);
+}
+
+int graphDeleteRoad(ALGraph *graph, const char *fromName, const char *toName)
+{
+        int from;
+        int to;
+        int deletedForward;
+        int deletedBackward;
+        if(graph == NULL || fromName == NULL || toName == NULL)
+        {
+                return 0;
+        }
+        from = locate(*graph, fromName);
+        to = locate(*graph, toName);
+        if(from < 0 || to < 0 || from == to)
+        {
+                return 0;
+        }
+        deletedForward = deleteDirectedEdge(graph, from, to);
+        deletedBackward = deleteDirectedEdge(graph, to, from);
+        return deletedForward || deletedBackward;
+}
+
+void freeMatrix(ALGraph *graph)
+{
+        int i = 0;
+        (void)graph;
+        if(parray == NULL)
+        {
+                parray = NULL;
+                matrixNodeCount = 0;
+                return;
+        }
+        for(i = 0; i < matrixNodeCount; i++)
+        {
+                free(parray[i]);
+        }
+        free(parray);
+        parray = NULL;
+        matrixNodeCount = 0;
+}
+
 
 void transToMatrix(ALGraph * graph)
 {
-	int i=0,j=0;
-	//就是创建矩阵（也就二维数组） 
-	//double **parray = (double *)malloc(sizeof(double)*graph->nodenum); 
-	parray = (double *)malloc(sizeof(double)*graph->nodenum); 
-	CNode *p = (CNode *)malloc(sizeof(CNode)); 
+        int i=0;
+        const CNode *p = NULL;
+        if(graph == NULL || graph->nodenum <= 0)
+        {
+                return;
+        }
+        freeMatrix(graph);
+        parray = (double **)calloc(graph->nodenum, sizeof(double *));
+        if(parray == NULL)
+        {
+                return;
+        }
+        matrixNodeCount = graph->nodenum;
 	for(i=0;i<graph->nodenum;i++)
 	{
 		parray[i] = (double *)malloc(sizeof(double)*graph->nodenum);
+                if(parray[i] == NULL)
+                {
+                        freeMatrix(graph);
+                        return;
+                }
 	}
-	//初始化二维数组
 	 for(i=0;i<graph->nodenum;i++)
 	{
+                int j=0;
 		for(j=0;j<graph->nodenum;j++)
 		{
 			if(i == j)
@@ -125,24 +299,31 @@ void transToMatrix(ALGraph * graph)
 			}
 		} 
 	}
-	//把景区路由图中景点间的边存到二维数组
 	 for(i=0;i<graph->nodenum;i++)
 	{		
 		for(p=graph->roadlist[i].first;p!=NULL;p=p->next)
 		{
-			j = p->index;
-			parray[i][j] = p->length;
+                        int edgeIndex = p->index;
+                        parray[i][edgeIndex] = p->length;
 		} 
 	}
-	free(p);
 }
 
 
-int getEdgeNum(ALGraph * graph,char vertexName[10])
+int getEdgeNum(const ALGraph * graph,const char vertexName[10])
 {
 	int num = 0;
-	CNode *p=NULL;
-	int i = locate(*graph,vertexName);
+        const CNode *p=NULL;
+        int i = -1;
+        if(graph == NULL || vertexName == NULL)
+        {
+                return 0;
+        }
+        i = locate(*graph,vertexName);
+        if(i < 0)
+        {
+                return 0;
+        }
 	for(p=graph->roadlist[i].first;p!=NULL;p=p->next)
 	{
 		num++;
@@ -150,315 +331,197 @@ int getEdgeNum(ALGraph * graph,char vertexName[10])
 	return num;	
 }
 
-//创建导游图 
-void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
+void createGuideGraphEX(const ALGraph * graph,ALGraph * guidgraph,int n)
 {
-	DFSTraverse(*graph); //深度优先遍历决定优先游览哪些景点 
-	int k = 0;
-	int n = 0;
-	int flag = 0;
-	int i = 0;
-	int j = 0;
-	CNode *node1 = NULL;
-	CNode *node2 = NULL; 
-	//游览路径尽量不走已经走过的路，最后要回到出发点乘车 
-	char targetVertex[10] = "";
-	for(i = 0;i<graph->nodenum;i++) //path保存的是深度优先遍历顺序的顶点，因此顶点数和图的顶点数一样多 
-	{
-		if(i==0)//第一个节点 
-		{
-			guidePath[n++] = path[i];
-			printf("%s ",path[i]);
-		}else if(i == graph->nodenum-1)//访问到了最后一个节点 
-		{
-			guidePath[n++] = path[i];
-			printf("%s ",path[i]);
-			if(!isedg(*graph,path[i],path[0]))
-			{
-				flag = 1; 
-				strcpy(targetVertex,path[0]);
-			} 			
-		} else //浏览途中的节点 
-		{
-			guidePath[n++] = path[i];
-			printf("%s ",path[i]);
-			if(!isedg(*graph,path[i],path[i+1])) 
-			{
-				flag = 1; 
-				strcpy(targetVertex,path[i+1]);
-			}
-		}
-		if(flag)//在已经浏览的景点路径中寻找可以到达下一个顶点 的顶点并复制到 guidePath
-		{
-			int tempIndex = n-1;
-			int temp =  0; 
-			int mm = n-1;
-			for(mm=n-1;mm>=0;mm--)
-			{
-				if(strcmp(targetVertex,guidePath[mm]) ==0)
-				{
-					temp = mm;
-				}
-			} 
-			while(!isedg(*graph,guidePath[tempIndex],targetVertex))
-			{
-				if(getEdgeNum(graph,guidePath[tempIndex])>1)
-				{					
-					CNode *p=NULL;
-					int x = locate(*graph,guidePath[tempIndex]);
-					for(p=graph->roadlist[x].first;p!=NULL;p=p->next)
-					{
-						if(strcmp(graph->roadlist[p->index].data,guidePath[tempIndex-1]) !=0)
-						{
-							for(;temp<tempIndex-1;temp++)
-							{
-								if(isedg(*graph,graph->roadlist[p->index].data,guidePath[temp]))
-								{
-									break;
-								}
-							}
-						}
-						if(temp != tempIndex-1)
-						{
-							break;
-						}
-					}
-					if(p!=NULL) //找到其他路径 
-					{
-						tempIndex = temp;
-					}else 
-					{
-						tempIndex--;						
-					}
-				}else //走来时的上一个节点 
-				{
-					tempIndex--;				
-				} 
-				
-				if(tempIndex>=0)
-				{
-					guidePath[n++] = path[tempIndex];
-					printf("%s ",path[tempIndex]);
-				}else
-				{
-					break;
-				}
-			}
-		} 
-		flag = 0;
-	} 
-//	for(i = 0;i<graph->nodenum-1;i++)
-//	{
-//		k=0;
-//		flag = 1;
-//		while(flag)
-//		{
-//			guidePath[n++] = path[i+k];  //path保存的是深度优先访问的经典序列 
-//			if(isedg(*graph,path[i+k],path[i+1]))
-//			{
-//				flag = 0;
-//			}else
-//			{
-//				k--;
-//			}			
-//		}		
-//	}
-//	guidePath[n] = path[i];
-
-	printf("导游线路图：\n");
-	for(i=0;i<=n;i++)
-	{
-		printf("->%s",guidePath[i]);
-	}
-	printf("\n");
-	//导游图邻接表 
-	createGuideGraphEX(graph,guidgraph,n); 
-//	for(i=0;i<=n;i++)
-//	{
-//		visited[i]=0;
-//	}
-//	for(i=0;i<graph->nodenum;i++)
-//	{
-//		strcpy(guidgraph->roadlist[i].data , graph->roadlist[i].data);
-//		guidgraph->roadlist[i].first = NULL;
-//	}
-//	for(k=0;k<n;k++)
-//	{
-//		i = locate(*graph,guidePath[k]);
-//		j = locate(*graph,guidePath[k+1]);
-//		if(visited[j])
-//		{
-//			int m = k+2;
-//			if(m<=n)
-//			{
-//				while(visited[locate(*graph,guidePath[m])])
-//				{
-//					if(isedg(*graph,guidePath[k],guidePath[m]))
-//					{
-//						j = locate(*graph,guidePath[m]);
-//						visited[j] = 1;
-//						visited[i] = 1;
-//						node1 = (CNode *) malloc(sizeof(CNode));
-////					 	node2= (CNode *) malloc(sizeof(CNode));
-//					 	node1->index = j;
-//					 	node1->length = getlength(*graph,i,j);
-//					 	node1->next = guidgraph->roadlist[i].first;
-//					 	guidgraph->roadlist[i].first = node1;
-////					 	node2->next = guidgraph->roadlist[i].first;
-////					 	guidgraph->roadlist[i].first = node1;
-////						node1->next = node2;
-//						edgnum ++ ;
-//					}
-//					if(++m>=n)
-//					{
-//						break;
-//					}					
-//				}
-//			}
-//		}else
-//		{
-//			visited[j] = 1;
-//			visited[i] = 1;
-//			node1 = (CNode *) malloc(sizeof(CNode));
-////		 	node2= (CNode *) malloc(sizeof(CNode));
-//		 	node1->index = j;
-//		 	node1->length = getlength(*graph,i,j);
-//		 	node1->next = guidgraph->roadlist[i].first;
-//		 	guidgraph->roadlist[i].first = node1;
-////		 	node2->next = guidgraph->roadlist[i].first;
-////		 	guidgraph->roadlist[i].first = node1;
-////			node1->next = node2;
-//			edgnum ++ ;
-//		}		
-//	}
-//	guidgraph->nodenum = graph->nodenum;
-//	guidgraph->edgnum = edgnum;
-}
-
-void createGuideGraphEX(ALGraph * graph,ALGraph * guidgraph,int n)
-{
-	int i=0,j=0,k=0;
-	int edgnum = 0;
-	CNode *node = NULL; 
-	CNode *p = NULL;
+        int i=0,k=0;
+        const CNode *p = NULL;
+        if(graph == NULL || guidgraph == NULL)
+        {
+                return;
+        }
+        freeGraph(guidgraph);
 	for(i=0;i<graph->nodenum;i++)
 	{
 		strcpy(guidgraph->roadlist[i].data , graph->roadlist[i].data);
 		guidgraph->roadlist[i].first = NULL;
 	}
+        guidgraph->nodenum = graph->nodenum;
+        guidgraph->edgnum = 0;
 	for(k=0;k<n-1;k++)
 	{
+                int j = 0;
 		i = locate(*graph,guidePath[k]);
 		j = locate(*graph,guidePath[k+1]);
-		node = (CNode *) malloc(sizeof(CNode));
+                if(i < 0 || j < 0)
+                {
+                        continue;
+                }
 		for(p = graph->roadlist[i].first;p!=NULL;p=p->next)
 		{
 			if(p->index == j)
 			{
-				node->length = p->length;
+                                addEdge(guidgraph, i, j, p->length);
+                                break;
 			}
 		}
-		node->index = j;
-		node->next = graph->roadlist[i].first;
-		graph->roadlist[i].first = node; 
-		edgnum ++ ;		
 	}
-	guidgraph->nodenum = graph->nodenum;
-	guidgraph->edgnum = edgnum;
 } 
 
-void saveGraph(ALGraph * graph)
+void saveGraph(const ALGraph * graph)
 {
-	FILE *fp;
-	//保存顶点和边参数 
-	fp = fopen("graphParams.txt","w");
-	if(fp==NULL)
+        if(graphSaveToFiles(graph, "graphParams.txt", "graphVertex.txt", "graphEdge.txt"))
+        {
+                printf("Graph saved successfully.\n");
+        }
+        else
 	{
-		printf("打开图参数文件《%s》失败！\n","graphParams.txt");
-		return ;
+                printf("Failed to save graph.\n");
 	}
-	fprintf(fp,"%d %d\n",graph->nodenum,graph->edgnum);
+}
+
+int graphSaveToFiles(const ALGraph *graph, const char *paramsPath, const char *vertexPath, const char *edgePath)
+{
+        FILE *fp;
+        int i;
+        const CNode *p = NULL;
+
+        if(graph == NULL || paramsPath == NULL || vertexPath == NULL || edgePath == NULL)
+	{
+                return 0;
+        }
+
+        fp = fopen(paramsPath, "w");
+        if(fp == NULL)
+        {
+                return 0;
+	}
+        fprintf(fp, "%d %d\n", graph->nodenum, graph->edgnum);
+        fclose(fp);
+
+        fp = fopen(vertexPath, "w");
+        if(fp == NULL)
+	{
+                return 0;
+	}
+        for(i = 0; i < graph->nodenum; i++)
+        {
+                fprintf(fp, "%s\n", graph->roadlist[i].data);
+        }
 	fclose(fp);
-	//保存顶点
-	fp = fopen("graphVertex.txt","w");
-	if(fp==NULL)
+
+        fp = fopen(edgePath, "w");
+        if(fp == NULL)
 	{
-		printf("打开图顶点文件《%s》失败！\n","graphVertex.txt");
-		return ;
+                return 0;
 	}
-	int i = 0;
-	for(i=0;i<graph->nodenum;i++)
+        for(i = 0; i < graph->nodenum; i++)
 	{
-		fprintf(fp,"%s\n",graph->roadlist[i].data);
-	}
-	fclose(fp);
-	//保存弧
-	 fp = fopen("graphEdge.txt","w");
-	if(fp==NULL)
-	{
-		printf("打开图的弧文件《%s》失败！\n","graphEdge.txt");
-		return ;
-	}
-	i = 0;
-	CNode *p=NULL; 
-	for(i=0;i<graph->nodenum;i++)
-	{
-		for(p=graph->roadlist[i].first;p!=NULL;p=p->next)
+                for(p = graph->roadlist[i].first; p != NULL; p = p->next)
 		{
-			fprintf(fp,"%s %s %d\n",graph->roadlist[i].data,graph->roadlist[p->index].data,p->length);
+                        if(p->index >= 0 && p->index < graph->nodenum)
+                        {
+                                fprintf(fp, "%s %s %d\n", graph->roadlist[i].data, graph->roadlist[p->index].data, p->length);
+                        }
 		}
 	}
 	fclose(fp);
-	printf("图保存成功！\n");	
+        return 1;
 } 
+
 void loadGraph(ALGraph * graph)
 {
+        if(graphLoadFromFiles(graph, "graphParams.txt", "graphVertex.txt", "graphEdge.txt"))
+        {
+                printf("Graph loaded successfully: %d spots, %d roads.\n", graph->nodenum, graph->edgnum);
+        }
+        else
+        {
+                printf("Failed to load graph.\n");
+        }
+}
+
+int graphLoadFromFiles(ALGraph *graph, const char *paramsPath, const char *vertexPath, const char *edgePath)
+{
 	FILE *fp;
-	//加载图参数 
-	fp = fopen("graphParams.txt","r");
-	if(fp==NULL)
+        int fileEdgeNum = 0;
+        int nodenum = 0;
+        int i;
+        char line[128];
+
+        if(graph == NULL || paramsPath == NULL || vertexPath == NULL || edgePath == NULL)
+        {
+                return 0;
+        }
+        initGraph(graph);
+
+        fp = fopen(paramsPath, "r");
+        if(fp == NULL)
 	{
-		printf("打开图参数文件《%s》失败！\n","graphParams.txt");
-		return ;
+                return 0;
 	}
-	fscanf(fp,"%d %d\n",&graph->nodenum,&graph->edgnum);
+        if(fscanf(fp, "%d %d", &nodenum, &fileEdgeNum) != 2 || nodenum <= 0 || nodenum > MAXNUM || fileEdgeNum < 0)
+        {
+                fclose(fp);
+                return 0;
+        }
+        graph->nodenum = nodenum;
+        graph->edgnum = 0;
 	fclose(fp);
-	//加载顶点
-	fp = fopen("graphVertex.txt","r");
-	if(fp==NULL)
+
+        fp = fopen(vertexPath, "r");
+        if(fp == NULL)
 	{
-		printf("打开图顶点文件《%s》失败！\n","graphVertex.txt");
-		return ;
+                initGraph(graph);
+                return 0;
 	}
-	int i = 0;
-	for(i=0;i<graph->nodenum;i++)
+        for(i = 0; i < graph->nodenum; i++)
 	{
-		fscanf(fp,"%s\n",graph->roadlist[i].data);
+                if(fscanf(fp, "%9s", graph->roadlist[i].data) != 1 || locate(*graph, graph->roadlist[i].data) != i)
+                {
+                        fclose(fp);
+                        initGraph(graph);
+                        return 0;
+                }
 		graph->roadlist[i].first = NULL;
 	}
 	fclose(fp);
-	//加载弧
-	 fp = fopen("graphEdge.txt","r");
-	if(fp==NULL)
+
+        fp = fopen(edgePath, "r");
+        if(fp == NULL)
 	{
-		printf("打开图的弧文件《%s》失败！\n","graphEdge.txt");
-		return ;
+                return 0;
 	}
-	int length = 0;
-	CNode *p=NULL;
-	char v1[10]="";
-	char v2[10]=""; 
-	while(fscanf(fp,"%s %s %d",v1,v2,&length)!=EOF)
+        while(fgets(line, sizeof(line), fp) != NULL)
 	{
-		i = locate(*graph,v1);
-		p= (CNode *)malloc(sizeof(CNode));
-		p->length = length;
-		p->index = locate(*graph,v2);
-		p->next =  graph->roadlist[i].first;
-		graph->roadlist[i].first = p; 
+                int length = 0;
+                char extra[8] = "";
+                char v1[10] = "";
+                char v2[10] = "";
+                int from = -1;
+                int to = -1;
+
+                if(line[0] == '\n' || line[0] == '\0')
+                {
+                        continue;
+                }
+                if(sscanf(line, "%9s %9s %d %7s", v1, v2, &length, extra) != 3)
+                {
+                        fclose(fp);
+                        initGraph(graph);
+                        return 0;
+                }
+                from = locate(*graph, v1);
+                to = locate(*graph, v2);
+                if(from < 0 || to < 0 || length <= 0)
+                {
+                        fclose(fp);
+                        initGraph(graph);
+                        return 0;
+                }
+                addEdge(graph, from, to, length);
 	}
 	fclose(fp);
-	printf("图加载成功！\n");
+        return 1;
 }
 
 
