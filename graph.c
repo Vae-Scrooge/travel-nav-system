@@ -2,6 +2,10 @@
 #include "travels.h"
 
 double **parray; 
+int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
+extern char path[MAXNUM][10];  //存储遍历过程中顺序 访问的景点名称  
+char * guidePath[2 * MAXNUM];
+
 
 //创建图的邻接表
 void createGraph(ALGraph * graph)
@@ -133,10 +137,19 @@ void transToMatrix(ALGraph * graph)
 	free(p);
 }
 
-int visited[MAXNUM];//标记已经访问的经典  0 未访问  1 已经访问
-extern char path[MAXNUM][10];  //存储遍历过程中顺序 访问的景点名称  
-char * guidePath[2 * MAXNUM];
-int edgnum = 0;
+
+int getEdgeNum(ALGraph * graph,char vertexName[10])
+{
+	int num = 0;
+	CNode *p=NULL;
+	int i = locate(*graph,vertexName);
+	for(p=graph->roadlist[i].first;p!=NULL;p=p->next)
+	{
+		num++;
+	}
+	return num;	
+}
+
 //创建导游图 
 void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 {
@@ -149,27 +162,108 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 	CNode *node1 = NULL;
 	CNode *node2 = NULL; 
 	//游览路径尽量不走已经走过的路，最后要回到出发点乘车 
-//	for(i = 0;i<graph->nodenum;i++)
-//	{
-//	
-//	} 
-	for(i = 0;i<graph->nodenum-1;i++)
+	char targetVertex[10] = "";
+	for(i = 0;i<graph->nodenum;i++) //path保存的是深度优先遍历顺序的顶点，因此顶点数和图的顶点数一样多 
 	{
-		k=0;
-		flag = 1;
-		while(flag)
+		if(i==0)//第一个节点 
 		{
-			guidePath[n++] = path[i+k];  //path保存的是深度优先访问的经典序列 
-			if(isedg(*graph,path[i+k],path[i+1]))
+			guidePath[n++] = path[i];
+			printf("%s ",path[i]);
+		}else if(i == graph->nodenum-1)//访问到了最后一个节点 
+		{
+			guidePath[n++] = path[i];
+			printf("%s ",path[i]);
+			if(!isedg(*graph,path[i],path[0]))
 			{
-				flag = 0;
-			}else
+				flag = 1; 
+				strcpy(targetVertex,path[0]);
+			} 			
+		} else //浏览途中的节点 
+		{
+			guidePath[n++] = path[i];
+			printf("%s ",path[i]);
+			if(!isedg(*graph,path[i],path[i+1])) 
 			{
-				k--;
-			}			
-		}		
-	}
-	guidePath[n] = path[i];
+				flag = 1; 
+				strcpy(targetVertex,path[i+1]);
+			}
+		}
+		if(flag)//在已经浏览的景点路径中寻找可以到达下一个顶点 的顶点并复制到 guidePath
+		{
+			int tempIndex = n-1;
+			int temp =  0; 
+			int mm = n-1;
+			for(mm=n-1;mm>=0;mm--)
+			{
+				if(strcmp(targetVertex,guidePath[mm]) ==0)
+				{
+					temp = mm;
+				}
+			} 
+			while(!isedg(*graph,guidePath[tempIndex],targetVertex))
+			{
+				if(getEdgeNum(graph,guidePath[tempIndex])>1)
+				{					
+					CNode *p=NULL;
+					int x = locate(*graph,guidePath[tempIndex]);
+					for(p=graph->roadlist[x].first;p!=NULL;p=p->next)
+					{
+						if(strcmp(graph->roadlist[p->index].data,guidePath[tempIndex-1]) !=0)
+						{
+							for(;temp<tempIndex-1;temp++)
+							{
+								if(isedg(*graph,graph->roadlist[p->index].data,guidePath[temp]))
+								{
+									break;
+								}
+							}
+						}
+						if(temp != tempIndex-1)
+						{
+							break;
+						}
+					}
+					if(p!=NULL) //找到其他路径 
+					{
+						tempIndex = temp;
+					}else 
+					{
+						tempIndex--;						
+					}
+				}else //走来时的上一个节点 
+				{
+					tempIndex--;				
+				} 
+				
+				if(tempIndex>=0)
+				{
+					guidePath[n++] = path[tempIndex];
+					printf("%s ",path[tempIndex]);
+				}else
+				{
+					break;
+				}
+			}
+		} 
+		flag = 0;
+	} 
+//	for(i = 0;i<graph->nodenum-1;i++)
+//	{
+//		k=0;
+//		flag = 1;
+//		while(flag)
+//		{
+//			guidePath[n++] = path[i+k];  //path保存的是深度优先访问的经典序列 
+//			if(isedg(*graph,path[i+k],path[i+1]))
+//			{
+//				flag = 0;
+//			}else
+//			{
+//				k--;
+//			}			
+//		}		
+//	}
+//	guidePath[n] = path[i];
 
 	printf("导游线路图：\n");
 	for(i=0;i<=n;i++)
@@ -178,7 +272,7 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 	}
 	printf("\n");
 	//导游图邻接表 
-	createGuideGraph(guidgraph,n); 
+	createGuideGraphEX(graph,guidgraph,n); 
 //	for(i=0;i<=n;i++)
 //	{
 //		visited[i]=0;
@@ -241,9 +335,10 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph)
 //	guidgraph->edgnum = edgnum;
 }
 
-void createGuideGraph(ALGraph * graph,ALGraph * guidgraph,int n)
+void createGuideGraphEX(ALGraph * graph,ALGraph * guidgraph,int n)
 {
 	int i=0,j=0,k=0;
+	int edgnum = 0;
 	CNode *node = NULL; 
 	CNode *p = NULL;
 	for(i=0;i<graph->nodenum;i++)
@@ -256,7 +351,7 @@ void createGuideGraph(ALGraph * graph,ALGraph * guidgraph,int n)
 		i = locate(*graph,guidePath[k]);
 		j = locate(*graph,guidePath[k+1]);
 		node = (CNode *) malloc(sizeof(CNode));
-		for(p = graph->roadlist[i].first,p!=NULL;p=p->next)
+		for(p = graph->roadlist[i].first;p!=NULL;p=p->next)
 		{
 			if(p->index == j)
 			{

@@ -11,5 +11,7 @@ void saveGraph(ALGraph * graph);
 void loadGraph(ALGraph * graph); 
 
 void transToMatrix(ALGraph * graph); 
+int getEdgeNum(ALGraph * graph,char vertexName[10]);
+void createGuideGraphEX(ALGraph * graph,ALGraph * guidgraph,int n); 
 
 #endif

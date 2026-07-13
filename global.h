@@ -26,6 +26,5 @@ typedef struct stGraph{
 }ALGraph;  //ALGraph 图的邻接表
 
 int locate(ALGraph graph,char * e);//定位 
-void createGuideGraph(ALGraph * graph,ALGraph * guidgraph,int n); 
 
 #endif
