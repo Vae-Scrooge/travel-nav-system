@@ -27,8 +27,7 @@ test:
 
 coverage: CFLAGS += --coverage -O0
 coverage: LDFLAGS += --coverage
-coverage: test
-	gcov global.c graph.c travels.c userManager.c password.c stats.c
+coverage: clean test
 
 perf:
 	mkdir -p $(BUILD_DIR)
