@@ -330,19 +330,21 @@ int hashPassword(const char *password, const char *salt, char *output, size_t ou
 {
         uint8_t derived[SHA256_DIGEST_SIZE];
         char hexDigest[SHA256_DIGEST_SIZE * 2 + 1];
+        int written;
 
-        if(password == NULL || salt == NULL || output == NULL)
+        if(password == NULL || salt == NULL || output == NULL || outputSize == 0)
         {
                 return 0;
         }
 
         pbkdf2Sha256(password, salt, PBKDF2_ITERATIONS, derived);
         toHex(derived, sizeof(derived), hexDigest, sizeof(hexDigest));
-        if(snprintf(output, outputSize, "pbkdf2_sha256$%d$%s$%s", PBKDF2_ITERATIONS, salt, hexDigest) < 0)
+        written = snprintf(output, outputSize, "pbkdf2_sha256$%d$%s$%s", PBKDF2_ITERATIONS, salt, hexDigest);
+        if(written < 0 || (size_t)written >= outputSize)
         {
                 return 0;
         }
-        return strlen(output) < outputSize;
+        return 1;
 }
 
 int verifyPassword(const char *password, const char *storedHash)
