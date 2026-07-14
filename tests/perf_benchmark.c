@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../graph.h"
-#include "../travels.h"
+#include "../src/core/graph.h"
+#include "../src/core/travels.h"
 
 static void set_vertex_name(ALGraph *graph, int index)
 {

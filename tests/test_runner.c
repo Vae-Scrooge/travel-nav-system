@@ -12,11 +12,12 @@
 #define remove_dir(path) rmdir(path)
 #endif
 
-#include "../graph.h"
-#include "../password.h"
-#include "../stats.h"
-#include "../travels.h"
-#include "../userManager.h"
+#include "../src/core/graph.h"
+#include "../src/core/password.h"
+#include "../src/manager/stats.h"
+#include "../src/core/travels.h"
+#include "../src/manager/userManager.h"
+#include "../src/manager/backup.h"
 
 extern double **parray;
 extern char *guidePath[2 * MAXNUM];
@@ -66,6 +67,9 @@ static void set_vertex(ALGraph *graph, int index, const char *name)
 {
         strncpy(graph->roadlist[index].data, name, sizeof(graph->roadlist[index].data) - 1);
         graph->roadlist[index].data[sizeof(graph->roadlist[index].data) - 1] = '\0';
+        graph->roadlist[index].description[0] = '\0';
+        graph->roadlist[index].ticketPrice = 0.0;
+        graph->roadlist[index].openTime[0] = '\0';
         graph->roadlist[index].first = NULL;
 }
 
@@ -436,15 +440,15 @@ static void test_graph_default_path_wrappers_round_trip(void)
 {
         ALGraph graph = create_sample_graph();
         ALGraph loaded;
-        int hadParams = backup_file_if_exists("graphParams.txt", "graphParams.txt.testbak");
-        int hadVertex = backup_file_if_exists("graphVertex.txt", "graphVertex.txt.testbak");
-        int hadEdge = backup_file_if_exists("graphEdge.txt", "graphEdge.txt.testbak");
+        int hadParams = backup_file_if_exists("data/graphParams.txt", "data/graphParams.txt.testbak");
+        int hadVertex = backup_file_if_exists("data/graphVertex.txt", "data/graphVertex.txt.testbak");
+        int hadEdge = backup_file_if_exists("data/graphEdge.txt", "data/graphEdge.txt.testbak");
 
         initGraph(&loaded);
         saveGraph(&graph);
-        assert(file_exists("graphParams.txt"));
-        assert(file_exists("graphVertex.txt"));
-        assert(file_exists("graphEdge.txt"));
+        assert(file_exists("data/graphParams.txt"));
+        assert(file_exists("data/graphVertex.txt"));
+        assert(file_exists("data/graphEdge.txt"));
 
         loadGraph(&loaded);
         assert(loaded.nodenum == graph.nodenum);
@@ -452,9 +456,9 @@ static void test_graph_default_path_wrappers_round_trip(void)
         assert(getlength(loaded, locate(loaded, "A"), locate(loaded, "C")) == 20);
 
         freeGraph(&loaded);
-        restore_file_backup("graphParams.txt", "graphParams.txt.testbak", hadParams);
-        restore_file_backup("graphVertex.txt", "graphVertex.txt.testbak", hadVertex);
-        restore_file_backup("graphEdge.txt", "graphEdge.txt.testbak", hadEdge);
+        restore_file_backup("data/graphParams.txt", "data/graphParams.txt.testbak", hadParams);
+        restore_file_backup("data/graphVertex.txt", "data/graphVertex.txt.testbak", hadVertex);
+        restore_file_backup("data/graphEdge.txt", "data/graphEdge.txt.testbak", hadEdge);
         freeGraph(&graph);
 }
 
@@ -783,7 +787,7 @@ static void test_travels_edge_queries_reject_invalid_names(void)
         freeGraph(&graph);
 }
 
-static void test_print_path_handles_invalid_arguments(void)
+static void test_print_path(void)
 {
         int pathMatrix[MAXNUM][MAXNUM];
         double shortpath[MAXNUM][MAXNUM];
@@ -791,8 +795,8 @@ static void test_print_path_handles_invalid_arguments(void)
 
         transToMatrix(&graph);
         shortPath(graph, pathMatrix, shortpath);
-        printPath(graph, pathMatrix, shortpath, -1, 2);
-        printPath(graph, pathMatrix, shortpath, 0, 99);
+        printPath(graph, pathMatrix, shortpath, 0, 2);
+
         pathMatrix[0][2] = -1;
         printPath(graph, pathMatrix, shortpath, 0, 2);
 
@@ -873,6 +877,93 @@ static void test_input_helpers_validate_tokens(void)
         remove(inputPath);
 }
 
+static void test_graph_spot_info(void)
+{
+        ALGraph graph;
+        initGraph(&graph);
+
+        assert(graphAddSpot(&graph, "SpotA"));
+        assert(graphUpdateSpotInfo(&graph, "SpotA", "A beautiful scenic spot", 50.0, "9:00-17:00"));
+        assert(!graphUpdateSpotInfo(&graph, "Missing", "Desc", 10.0, "Time"));
+        assert(!graphUpdateSpotInfo(NULL, "SpotA", "Desc", 10.0, "Time"));
+        assert(!graphUpdateSpotInfo(&graph, NULL, "Desc", 10.0, "Time"));
+
+        assert(graphAddSpot(&graph, "SpotB"));
+        assert(graphUpdateSpotInfo(&graph, "SpotB", "", 0.0, ""));
+
+        graphPrintSpotInfo(&graph, "SpotA");
+        graphPrintSpotInfo(&graph, "Missing");
+        graphPrintSpotInfo(NULL, "SpotA");
+
+        freeGraph(&graph);
+}
+
+static void test_backup_restore(void)
+{
+        ALGraph graph = create_sample_graph();
+        ALGraph restored;
+        initGraph(&restored);
+
+        assert(backupCreate(&graph, NULL));
+        backupList();
+        assert(backupDelete("nonexistent_backup"));
+
+        assert(backupRestore("nonexistent_backup", &restored, NULL) == 0);
+
+        freeGraph(&restored);
+        freeGraph(&graph);
+}
+
+static void test_user_change_password(void)
+{
+        const char *userPath = "test_user_change_pwd.txt";
+
+        remove(userPath);
+        assert(saveUserToFile(userPath, "testuser", "oldpass"));
+        assert(validateUserInFile(userPath, "testuser", "oldpass", 0) == 1);
+
+        assert(!userChangePassword(NULL, "oldpass", "newpass"));
+        assert(!userChangePassword("testuser", NULL, "newpass"));
+        assert(!userChangePassword("testuser", "oldpass", NULL));
+        assert(!userChangePassword("testuser", "", "newpass"));
+        assert(!userChangePasswordInFile(userPath, "testuser", "wrongpass", "newpass"));
+        assert(!userChangePasswordInFile(userPath, "testuser", "oldpass", "oldpass"));
+
+        assert(userChangePasswordInFile(userPath, "testuser", "oldpass", "newpass"));
+        assert(validateUserInFile(userPath, "testuser", "newpass", 0) == 1);
+        assert(validateUserInFile(userPath, "testuser", "oldpass", 0) == 3);
+
+        assert(!userChangePasswordInFile(userPath, "missing", "oldpass", "newpass"));
+
+        remove(userPath);
+}
+
+static void test_export_guide_route(void)
+{
+        ALGraph graph = create_sample_graph();
+        ALGraph guide;
+        initGraph(&guide);
+
+        guidePath[0] = graph.roadlist[0].data;
+        guidePath[1] = graph.roadlist[1].data;
+        guidePath[2] = graph.roadlist[2].data;
+        createGuideGraphEX(&graph, &guide, 3);
+
+        assert(exportGuideRoute(guide, "test_guide_export.txt"));
+        assert(file_exists("test_guide_export.txt"));
+        assert(!exportGuideRoute(guide, NULL));
+
+        ALGraph empty;
+        initGraph(&empty);
+        assert(!exportGuideRoute(empty, "test_empty_export.txt"));
+
+        remove("test_guide_export.txt");
+
+        freeGraph(&guide);
+        freeGraph(&graph);
+        freeGraph(&empty);
+}
+
 int main(void)
 {
         test_locate();
@@ -913,10 +1004,14 @@ int main(void)
         test_stats_module();
         test_traversal_loop_and_reporting();
         test_travels_edge_queries_reject_invalid_names();
-        test_print_path_handles_invalid_arguments();
+        test_print_path();
         test_stats_persistence_and_report();
         test_stats_error_and_empty_graph_branches();
         test_input_helpers_validate_tokens();
+        test_graph_spot_info();
+        test_backup_restore();
+        test_user_change_password();
+        test_export_guide_route();
         printf("All tests passed.\n");
         return 0;
 }

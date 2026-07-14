@@ -31,13 +31,14 @@
 | 用户控制台交互 | `user_console.c` | 登录、注册和用户入口菜单 |
 | 密码安全 | `password.c`、`password.h` | PBKDF2-HMAC-SHA256 密码哈希和验证 |
 | 访问统计 | `stats.c`、`stats.h` | 系统启动、登录、注册、路径查询和景点访问统计 |
+| 数据备份 | `backup.c`、`backup.h` | 数据备份与恢复 |
 
 ## 数据文件说明
 
 | 文件 | 作用 | 格式说明 |
 |---|---|---|
 | `graphParams.txt` | 保存图参数 | 第一行为景点数量和道路记录数量 |
-| `graphVertex.txt` | 保存景点名称 | 每行一个景点名称 |
+| `graphVertex.txt` | 保存景点名称 | 每行一个景点名称，格式：`名称|描述|门票价格|开放时间` |
 | `graphEdge.txt` | 保存道路信息 | 每行为“起点 终点 长度” |
 | `user.txt` | 保存用户信息 | 每行为“用户名 密码哈希 角色”，兼容历史“用户名 明文密码” |
 
@@ -45,9 +46,7 @@
 
 ## 路径规划实现说明
 
-系统当前保留了弗洛伊德算法（Floyd Algorithm）用于全图最短路径计算，同时针对用户单次查询场景新增了迪杰斯特拉算法（Dijkstra Algorithm）。当用户只查询两个景点之间的最短路线时，优先使用迪杰斯特拉算法，以减少不必要的全图重复计算。
-
-路径查询应满足以下成功标准：
+系统使用弗洛伊德算法（Floyd-Warshall Algorithm）用于全图最短路径计算。路径查询应满足以下成功标准：
 
 - 起点和终点存在时，输出最短距离和路径顺序。
 - 起点或终点不存在时，提示景点名称无效。
@@ -70,12 +69,10 @@ make build
 .\build\toursys.exe
 ```
 
-如果本机未安装 `gcc`、`clang` 或 MSVC 编译器，需要先安装对应工具链后再进行编译验证。
-
 也可以手动编译：
 
 ```bash
-gcc main.c menu.c global.c input.c graph.c graph_console.c travels.c travels_console.c userManager.c user_console.c password.c stats.c -o toursys
+gcc -std=c11 -Wall -Wextra -g main.c menu.c global.c input.c graph.c graph_console.c travels.c travels_console.c userManager.c user_console.c password.c stats.c backup.c -o build/toursys.exe
 ```
 
 ## 使用流程
@@ -112,28 +109,13 @@ make coverage
 8. 生成导游路线后进行环路检测。
 9. 修改图数据后重新保存并加载。
 
-当前最新测试结论以 [测试报告](docs/TEST_REPORT.md) 为准：
-
-| 指标 | 当前结果 |
-|---|---:|
-| 总体行覆盖率 | 94.2% |
-| 总体分支覆盖率 | 82.2% |
-| `graph.c` | 92% |
-| `travels.c` | 93.66% |
-| `userManager.c` | 93.98% |
-| `password.c` | 95% |
-| `stats.c` | 98% |
-| `cppcheck` 定向分析 | 目标文件无剩余告警 |
-
 ## 当前限制
 
-- 自动化测试总体行覆盖率已超过 90%，总体分支覆盖率已超过 80%；CI 已接入整体行/分支覆盖率门禁和 P0/P1 核心模块 90% 行覆盖率门禁。
+- 自动化测试总体行覆盖率已超过 90%，总体分支覆盖率已超过 80%。
 - 控制台和源码编码正在统一为 UTF-8，无 BOM；核心源码已完成历史乱码清理，旧数据文件仍可能需要人工复核。
 - 历史用户数据可能仍为明文密码，但登录成功后会自动迁移，并具备备份、日志和回滚保护。
 - 当前项目是控制台程序，RESTful API 仍需额外 HTTP 服务层支持。
-- 当前仅在存在明确多端访问需求时建议启动服务层建设，避免过早引入复杂 HTTP 架构。
 - 管理员和普通用户权限已基于用户文件角色字段建立基础边界，管理员操作和迁移记录已有日志；权限审批流程和更细粒度权限仍需继续完善。
-- 数据文件和源码文件仍位于同一目录，项目结构还有进一步规范空间。
 
 ## 后续改进方向
 
@@ -143,24 +125,19 @@ make coverage
 - 在确认多端访问需求后，基于现有业务函数抽象独立服务层。
 - 建立路径查询性能基准，跟踪不同图规模下的响应时间。
 - 将数据文件迁移到独立目录。
-- 补充更完整的用户手册和开发文档。
 
-## 工程化文档
+## 项目文档
 
-- [自动化测试策略](docs/TESTING.md)
-- [构建与部署体系](docs/BUILD_DEPLOY.md)
-- [安全存储与数据保护方案](docs/SECURITY.md)
-- [功能完整性梳理](docs/FUNCTIONAL_COMPLETENESS.md)
-- [代码规范](docs/CODING_STANDARD.md)
-- [系统性完善项目计划](docs/PROJECT_PLAN.md)
-- [景点道路接口设计说明](docs/API_DESIGN.md)
-- [测试报告](docs/TEST_REPORT.md)
-- [项目迭代与优化方案](docs/ITERATION_OPTIMIZATION_PLAN.md)
-- [覆盖率质量门禁计划](docs/COVERAGE_GATE_PLAN.md)
-- [编码规范与乱码治理方案](docs/ENCODING_STANDARD.md)
-- [用户权限矩阵](docs/PERMISSION_MATRIX.md)
-- [服务层架构决策说明](docs/SERVICE_ARCHITECTURE.md)
-- [性能基准测试报告](docs/PERFORMANCE_BASELINE.md)
+完整的项目文档位于 `docs/` 目录：
+
+| 文档 | 描述 |
+|---|---|
+| [README.md](docs/README.md) | 文档目录 |
+| [PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) | 项目概述、技术架构、构建部署、代码规范、安全特性 |
+| [FEATURE_GUIDE.md](docs/FEATURE_GUIDE.md) | 功能指南与使用说明 |
+| [API_REFERENCE.md](docs/API_REFERENCE.md) | API 接口参考 |
+| [TESTING_GUIDE.md](docs/TESTING_GUIDE.md) | 测试指南 |
+| [FEATURE_COMPARISON_REPORT.md](docs/FEATURE_COMPARISON_REPORT.md) | 功能对比报告 |
 
 ## 修改记录
 

@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g
+CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -g -Isrc/core -Isrc/console -Isrc/manager
 LDFLAGS ?=
 TEST_CFLAGS ?= -DUNIT_TEST
 
@@ -8,9 +8,34 @@ APP := $(BUILD_DIR)/toursys
 TEST_BIN := $(BUILD_DIR)/test_runner
 PERF_BIN := $(BUILD_DIR)/perf_benchmark
 
-APP_SOURCES := main.c menu.c global.c input.c graph.c graph_console.c travels.c travels_console.c userManager.c user_console.c password.c stats.c
-TEST_SOURCES := tests/test_runner.c global.c input.c graph.c travels.c userManager.c password.c stats.c
-PERF_SOURCES := tests/perf_benchmark.c global.c graph.c travels.c
+APP_SOURCES := main.c \
+               src/core/global.c \
+               src/core/input.c \
+               src/core/graph.c \
+               src/core/travels.c \
+               src/core/password.c \
+               src/console/menu.c \
+               src/console/graph_console.c \
+               src/console/travels_console.c \
+               src/console/user_console.c \
+               src/manager/userManager.c \
+               src/manager/stats.c \
+               src/manager/backup.c
+
+TEST_SOURCES := tests/test_runner.c \
+                src/core/global.c \
+                src/core/input.c \
+                src/core/graph.c \
+                src/core/travels.c \
+                src/core/password.c \
+                src/manager/userManager.c \
+                src/manager/stats.c \
+                src/manager/backup.c
+
+PERF_SOURCES := tests/perf_benchmark.c \
+                src/core/global.c \
+                src/core/graph.c \
+                src/core/travels.c
 
 .PHONY: all build test coverage perf clean dist
 
@@ -37,7 +62,7 @@ perf:
 dist: clean build
 	mkdir -p $(BUILD_DIR)/dist
 	cp $(APP) $(BUILD_DIR)/dist/
-	cp graphParams.txt graphVertex.txt graphEdge.txt user.txt $(BUILD_DIR)/dist/
+	cp data/graphParams.txt data/graphVertex.txt data/graphEdge.txt data/user.txt $(BUILD_DIR)/dist/
 
 clean:
 	rm -rf $(BUILD_DIR) *.gcda *.gcno *.gcov tests/*.gcda tests/*.gcno tests/*.gcov

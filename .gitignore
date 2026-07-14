@@ -18,3 +18,4 @@ stats.txt
 *.dev
 *.layout
 Makefile.win
+data/user.txt
