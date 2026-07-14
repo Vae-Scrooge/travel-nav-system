@@ -1,6 +1,7 @@
 
 #include "main.h"
 #include <ctype.h>
+#include <signal.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -12,12 +13,34 @@
 #include "src/manager/stats.h"
 #include "src/manager/backup.h"
 
+static ALGraph *globalGraph = NULL;
+static ALGraph *globalGuideGraph = NULL;
+
 static void configureConsoleEncoding(void)
 {
 #ifdef _WIN32
         SetConsoleOutputCP(CP_UTF8);
         SetConsoleCP(CP_UTF8);
 #endif
+}
+
+static void cleanupAndExit(int signum)
+{
+        (void)signum;
+        printf("\n\nCleaning up and saving data...\n");
+        if(globalGraph != NULL)
+        {
+                statsSave(globalGraph);
+                saveGraph(globalGraph);
+                freeMatrix(globalGraph);
+                freeGraph(globalGraph);
+        }
+        if(globalGuideGraph != NULL)
+        {
+                freeGraph(globalGuideGraph);
+        }
+        printf("Data saved. Exiting.\n");
+        exit(0);
 }
 
 int main()
@@ -28,6 +51,12 @@ int main()
         int path[MAXNUM][MAXNUM];
         double shortpath[MAXNUM][MAXNUM];
 	
+        globalGraph = &graph;
+        globalGuideGraph = &guidegraph;
+
+        signal(SIGINT, cleanupAndExit);
+        signal(SIGTERM, cleanupAndExit);
+
         configureConsoleEncoding();
         initGraph(&graph);
         initGraph(&guidegraph);
@@ -193,9 +222,11 @@ int main()
                                 const char *currentUser = userManagerGetCurrentUser();
                                 printf("修改密码\n");
                                 printf("旧密码：");
-                                readString(oldPassword, sizeof(oldPassword));
+                                readPassword(oldPassword, sizeof(oldPassword));
+                                printf("\n");
                                 printf("新密码：");
-                                readString(newPassword, sizeof(newPassword));
+                                readPassword(newPassword, sizeof(newPassword));
+                                printf("\n");
                                 userChangePassword(currentUser, oldPassword, newPassword);
                                 printf("\n");
                                 break;

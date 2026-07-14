@@ -10,10 +10,26 @@
 #define make_directory(path) mkdir(path, 0755)
 #endif
 
-double **parray = NULL;
+static double **parray = NULL;
 static int matrixNodeCount = 0;
+static int matrixDirty = 1;
 extern char path[MAXNUM][10];
 char * guidePath[2 * MAXNUM];
+
+double **getMatrix(void)
+{
+        return parray;
+}
+
+int getMatrixNodeCount(void)
+{
+        return matrixNodeCount;
+}
+
+void markMatrixDirty(void)
+{
+        matrixDirty = 1;
+}
 
 void initGraph(ALGraph *graph)
 {
@@ -144,8 +160,12 @@ int graphAddSpot(ALGraph *graph, const char *name)
         graph->roadlist[graph->nodenum].ticketPrice = 0.0;
         graph->roadlist[graph->nodenum].openTime[0] = '\0';
         graph->roadlist[graph->nodenum].first = NULL;
-        hashInsert(graph, name, graph->nodenum);
+        if(!hashInsert(graph, name, graph->nodenum))
+        {
+                return 0;
+        }
         graph->nodenum++;
+        markMatrixDirty();
         return 1;
 }
 
@@ -164,7 +184,14 @@ int graphRenameSpot(ALGraph *graph, const char *oldName, const char *newName)
         hashRemove(graph, oldName);
         strncpy(graph->roadlist[index].data, newName, sizeof(graph->roadlist[index].data) - 1);
         graph->roadlist[index].data[sizeof(graph->roadlist[index].data) - 1] = '\0';
-        hashInsert(graph, newName, index);
+        if(!hashInsert(graph, newName, index))
+        {
+                hashInsert(graph, oldName, index);
+                strncpy(graph->roadlist[index].data, oldName, sizeof(graph->roadlist[index].data) - 1);
+                graph->roadlist[index].data[sizeof(graph->roadlist[index].data) - 1] = '\0';
+                return 0;
+        }
+        markMatrixDirty();
         return 1;
 }
 
@@ -224,6 +251,7 @@ int graphDeleteSpot(ALGraph *graph, const char *name)
         }
 
         hashUpdateAll(graph);
+        markMatrixDirty();
         return 1;
 }
 
@@ -241,7 +269,12 @@ int graphAddOrUpdateRoad(ALGraph *graph, const char *fromName, const char *toNam
         {
                 return 0;
         }
-        return updateDirectedEdge(graph, from, to, length) && updateDirectedEdge(graph, to, from, length);
+        if(updateDirectedEdge(graph, from, to, length) && updateDirectedEdge(graph, to, from, length))
+        {
+                markMatrixDirty();
+                return 1;
+        }
+        return 0;
 }
 
 int graphDeleteRoad(ALGraph *graph, const char *fromName, const char *toName)
@@ -262,7 +295,15 @@ int graphDeleteRoad(ALGraph *graph, const char *fromName, const char *toName)
         }
         deletedForward = deleteDirectedEdge(graph, from, to);
         deletedBackward = deleteDirectedEdge(graph, to, from);
-        return deletedForward || deletedBackward;
+        if(deletedForward || deletedBackward)
+        {
+                markMatrixDirty();
+                if(deletedForward != deletedBackward)
+                {
+                        printf("Warning: Graph consistency issue - only one direction of the edge was deleted.\n");
+                }
+        }
+        return deletedForward && deletedBackward;
 }
 
 void freeMatrix(ALGraph *graph)
@@ -291,6 +332,11 @@ void transToMatrix(ALGraph * graph)
         {
                 return;
         }
+        if(!matrixDirty && parray != NULL && matrixNodeCount == graph->nodenum)
+        {
+                return;
+        }
+        matrixDirty = 0;
         freeMatrix(graph);
         parray = (double **)calloc(graph->nodenum, sizeof(double *));
         if(parray == NULL)

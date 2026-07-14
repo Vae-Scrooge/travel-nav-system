@@ -40,12 +40,13 @@ typedef struct stGraph{
 unsigned int hashString(const char *str);
 void initHashTable(ALGraph *graph);
 void freeHashTable(ALGraph *graph);
-void hashInsert(ALGraph *graph, const char *key, int value);
+int hashInsert(ALGraph *graph, const char *key, int value);
 void hashRemove(ALGraph *graph, const char *key);
 void hashUpdateAll(ALGraph *graph);
 int hashFind(ALGraph *graph, const char *key);
 int locate(ALGraph graph, const char *e);
 int readString(char *buffer, size_t size);
 int readInt(int *value);
+int readPassword(char *buffer, size_t size);
 
 #endif

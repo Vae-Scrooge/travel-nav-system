@@ -1,10 +1,10 @@
 #include "global.h"
 #include "travels.h"
+#include "graph.h"
 #include "../manager/stats.h"
 
 int visited[MAXNUM];
-char path[MAXNUM][10];
-extern double **parray; 
+char path[MAXNUM][10]; 
 typedef char str[10];
 static int dfsIndex = 0;
 
@@ -84,13 +84,14 @@ void shortPath(ALGraph graph,int pathMatrix[][MAXNUM],double shortpath[][MAXNUM]
 	int i=0;
 	int j=0;
 	int k=0; 
+        double **matrix = getMatrix();
 	for(i=0;i<graph.nodenum;i++)
 	{
 		for(j=0;j<graph.nodenum;j++)
 		{
-			shortpath[i][j] = parray[i][j];
+			shortpath[i][j] = matrix[i][j];
 			pathMatrix[i][j] = -1;
-			if(parray[i][j]<INF)
+			if(matrix[i][j]<INF)
 			{
 				pathMatrix[i][j] = i;
 			} 

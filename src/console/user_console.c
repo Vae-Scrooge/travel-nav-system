@@ -18,7 +18,7 @@ int loginsys()
                 }
                 printf("\n");
                 printf("Password: ");
-                readString(password, sizeof(password));
+                readPassword(password, sizeof(password));
                 printf("\n");
                 rs = validateUser(username, password);
                 if(rs == 1)
@@ -45,11 +45,13 @@ int userRegster()
 {
         char username[COLUMNLENGTH];
         char password[COLUMNLENGTH];
+        char answer[8];
         int result;
 
-        printf("Please input username and password: ");
+        printf("Please input username: ");
         readString(username, sizeof(username));
-        readString(password, sizeof(password));
+        printf("Please input password: ");
+        readPassword(password, sizeof(password));
         printf("\n");
         result = saveUser(username, password);
         if(result == 0)
@@ -58,6 +60,18 @@ int userRegster()
                 return 0;
         }
         printf("Registration succeeded.\n");
+        printf("Do you want to login immediately? (yes/no): ");
+        readString(answer, sizeof(answer));
+        if(strcmp(answer, "yes") == 0 || strcmp(answer, "YES") == 0)
+        {
+                if(validateUser(username, password) == 1)
+                {
+                        printf("Login succeeded.\n");
+                        userManagerSetCurrentUser(username);
+                        statsRecordLogin();
+                        return 2;
+                }
+        }
         return 1;
 }
 
@@ -65,6 +79,7 @@ int usermenu()
 {
         int opt = 0;
         int flag = 0;
+        int result = 0;
 
         while(1)
         {
@@ -88,7 +103,12 @@ int usermenu()
                                 }
                                 break;
                         case 2:
-                                if(userRegster() == 1)
+                                result = userRegster();
+                                if(result == 2)
+                                {
+                                        flag = 1;
+                                }
+                                else if(result == 1)
                                 {
                                         flag = 2;
                                 }

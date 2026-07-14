@@ -19,7 +19,6 @@
 #include "../src/manager/userManager.h"
 #include "../src/manager/backup.h"
 
-extern double **parray;
 extern char *guidePath[2 * MAXNUM];
 
 static int nearly_equal(double left, double right)
@@ -117,12 +116,14 @@ static void test_matrix_and_floyd_shortest_path(void)
 {
         int path[MAXNUM][MAXNUM];
         double shortpath[MAXNUM][MAXNUM];
+        double **matrix;
         ALGraph graph = create_sample_graph();
 
         transToMatrix(&graph);
-        assert(parray != NULL);
-        assert(nearly_equal(parray[0][1], 5));
-        assert(nearly_equal(parray[0][2], 20));
+        matrix = getMatrix();
+        assert(matrix != NULL);
+        assert(nearly_equal(matrix[0][1], 5));
+        assert(nearly_equal(matrix[0][2], 20));
 
         shortPath(graph, path, shortpath);
         assert(nearly_equal(shortpath[0][2], 12));
@@ -290,12 +291,14 @@ static void test_graph_delete_road_removes_middle_edge(void)
 static void test_graph_matrix_handles_empty_and_null_graph(void)
 {
         ALGraph graph;
+        double **matrix;
 
         initGraph(&graph);
         transToMatrix(NULL);
         freeMatrix(NULL);
         transToMatrix(&graph);
-        assert(parray == NULL);
+        matrix = getMatrix();
+        assert(matrix == NULL);
         freeMatrix(&graph);
 }
 

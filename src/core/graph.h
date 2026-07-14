@@ -28,4 +28,8 @@ void transToMatrix(ALGraph * graph);
 int getEdgeNum(const ALGraph * graph,const char vertexName[10]);
 void createGuideGraphEX(const ALGraph * graph,ALGraph * guidgraph,int n);
 
+double **getMatrix(void);
+int getMatrixNodeCount(void);
+void markMatrixDirty(void);
+
 #endif

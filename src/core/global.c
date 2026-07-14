@@ -40,19 +40,20 @@ void freeHashTable(ALGraph *graph)
         }
 }
 
-void hashInsert(ALGraph *graph, const char *key, int value)
+int hashInsert(ALGraph *graph, const char *key, int value)
 {
         unsigned int index;
         HashEntry *entry;
-        if(graph == NULL || key == NULL) return;
+        if(graph == NULL || key == NULL) return 0;
         index = hashString(key);
         entry = (HashEntry *)malloc(sizeof(HashEntry));
-        if(entry == NULL) return;
+        if(entry == NULL) return 0;
         strncpy(entry->key, key, sizeof(entry->key) - 1);
         entry->key[sizeof(entry->key) - 1] = '\0';
         entry->value = value;
         entry->next = graph->hashTable[index];
         graph->hashTable[index] = entry;
+        return 1;
 }
 
 void hashRemove(ALGraph *graph, const char *key)

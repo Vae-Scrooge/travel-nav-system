@@ -3,7 +3,6 @@
 #include "../core/travels.h"
 #include "../manager/userManager.h"
 
-extern double **parray;
 extern char path[MAXNUM][10];
 extern char *guidePath[2 * MAXNUM];
 
@@ -224,6 +223,7 @@ void printGraph(ALGraph *graph)
 {
         int i = 0;
         int j = 0;
+        double **matrix;
 
         if(graph == NULL || graph->nodenum <= 0)
         {
@@ -231,7 +231,8 @@ void printGraph(ALGraph *graph)
                 return;
         }
         transToMatrix(graph);
-        if(parray == NULL)
+        matrix = getMatrix();
+        if(matrix == NULL)
         {
                 printf("Failed to build adjacency matrix.\n");
                 return;
@@ -247,16 +248,103 @@ void printGraph(ALGraph *graph)
                 printf("%s\t", graph->roadlist[i].data);
                 for(j = 0; j < graph->nodenum; j++)
                 {
-                        printf("%4.f\t", parray[i][j]);
+                        printf("%4.f\t", matrix[i][j]);
                 }
                 printf("\n");
         }
 }
 
+static int findVertexIndex(const char **pathArray, int length, const char *target)
+{
+        int i;
+        for(i = 0; i < length; i++)
+        {
+                if(strcmp(pathArray[i], target) == 0)
+                {
+                        return i;
+                }
+        }
+        return -1;
+}
+
+static int findAlternativePath(ALGraph *graph, const char *currentVertex, const char *prevVertex, const char **guidePathArray, int startIndex, int endIndex)
+{
+        CNode *p;
+        int x = locate(*graph, currentVertex);
+        if(x < 0)
+        {
+                return -1;
+        }
+
+        for(p = graph->roadlist[x].first; p != NULL; p = p->next)
+        {
+                const char *neighbor = graph->roadlist[p->index].data;
+                if(strcmp(neighbor, prevVertex) != 0)
+                {
+                        int foundIndex = findVertexIndex(guidePathArray, endIndex, neighbor);
+                        if(foundIndex >= startIndex && foundIndex < endIndex)
+                        {
+                                return foundIndex;
+                        }
+                }
+        }
+        return -1;
+}
+
+static int completeGuidePath(ALGraph *graph, const char **guidePathArray, int *n, const char *targetVertex, int isEnd)
+{
+        int tempIndex = *n - 1;
+        int targetPos;
+
+        targetPos = findVertexIndex(guidePathArray, *n, targetVertex);
+        if(targetPos < 0)
+        {
+                return 0;
+        }
+
+        while(!isedg(*graph, guidePathArray[tempIndex], targetVertex))
+        {
+                int alternative;
+                const char *prevVertex = (tempIndex > 0) ? guidePathArray[tempIndex - 1] : NULL;
+
+                if(getEdgeNum(graph, guidePathArray[tempIndex]) > 1 && prevVertex != NULL)
+                {
+                        alternative = findAlternativePath(graph, guidePathArray[tempIndex], prevVertex, guidePathArray, targetPos, tempIndex);
+                        if(alternative >= 0)
+                        {
+                                tempIndex = alternative;
+                        }
+                        else
+                        {
+                                tempIndex--;
+                        }
+                }
+                else
+                {
+                        tempIndex--;
+                }
+
+                if(tempIndex >= 0)
+                {
+                        guidePathArray[(*n)++] = guidePathArray[tempIndex];
+                }
+                else
+                {
+                        break;
+                }
+        }
+
+        if(isEnd && *n > 0)
+        {
+                guidePathArray[*n] = guidePathArray[0];
+        }
+
+        return 1;
+}
+
 void createGuideGraph(ALGraph *graph, ALGraph *guidgraph)
 {
         int n = 0;
-        int flag = 0;
         int i = 0;
         char targetVertex[10] = "";
         int isEnd = 0;
@@ -278,9 +366,9 @@ void createGuideGraph(ALGraph *graph, ALGraph *guidgraph)
                         guidePath[n++] = path[i];
                         if(!isedg(*graph, path[i], path[0]))
                         {
-                                flag = 1;
-                                isEnd = 1;
                                 strcpy(targetVertex, path[0]);
+                                isEnd = 1;
+                                completeGuidePath(graph, (const char **)guidePath, &n, targetVertex, isEnd);
                         }
                 }
                 else
@@ -288,76 +376,11 @@ void createGuideGraph(ALGraph *graph, ALGraph *guidgraph)
                         guidePath[n++] = path[i];
                         if(!isedg(*graph, path[i], path[i + 1]))
                         {
-                                flag = 1;
                                 strcpy(targetVertex, path[i + 1]);
+                                isEnd = 0;
+                                completeGuidePath(graph, (const char **)guidePath, &n, targetVertex, isEnd);
                         }
                 }
-
-                if(flag)
-                {
-                        int tempIndex = n - 1;
-                        while(!isedg(*graph, guidePath[tempIndex], targetVertex))
-                        {
-                                int temp = 0;
-                                int mm = tempIndex;
-                                for(; mm >= 0; mm--)
-                                {
-                                        if(strcmp(targetVertex, guidePath[mm]) == 0)
-                                        {
-                                                temp = mm;
-                                                break;
-                                        }
-                                }
-                                if(getEdgeNum(graph, guidePath[tempIndex]) > 1)
-                                {
-                                        CNode *p = NULL;
-                                        int x = locate(*graph, guidePath[tempIndex]);
-                                        for(p = graph->roadlist[x].first; p != NULL; p = p->next)
-                                        {
-                                                if(strcmp(graph->roadlist[p->index].data, guidePath[tempIndex - 1]) != 0)
-                                                {
-                                                        for(; temp < tempIndex - 1; temp++)
-                                                        {
-                                                                if(strcmp(graph->roadlist[p->index].data, guidePath[temp]) == 0)
-                                                                {
-                                                                        break;
-                                                                }
-                                                        }
-                                                        if(temp != tempIndex - 1)
-                                                        {
-                                                                break;
-                                                        }
-                                                }
-                                        }
-                                        if(p != NULL)
-                                        {
-                                                tempIndex = temp;
-                                        }
-                                        else
-                                        {
-                                                tempIndex--;
-                                        }
-                                }
-                                else
-                                {
-                                        tempIndex--;
-                                }
-
-                                if(tempIndex >= 0)
-                                {
-                                        guidePath[n++] = guidePath[tempIndex];
-                                }
-                                else
-                                {
-                                        break;
-                                }
-                        }
-                        if(isEnd)
-                        {
-                                guidePath[n] = guidePath[0];
-                        }
-                }
-                flag = 0;
         }
 
         printf("导游路线图:\n");
