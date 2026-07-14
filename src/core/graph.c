@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "global.h"
 #include "graph.h"
 #include "travels.h"
