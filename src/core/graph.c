@@ -1,6 +1,12 @@
 #include "global.h"
 #include "graph.h"
 #include "travels.h"
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path) _mkdir(path)
+#else
+#include <sys/stat.h>
+#endif
 
 double **parray = NULL;
 static int matrixNodeCount = 0;
@@ -385,11 +391,7 @@ void createGuideGraphEX(const ALGraph * graph,ALGraph * guidgraph,int n)
 
 void saveGraph(const ALGraph * graph)
 {
-#ifdef _WIN32
         mkdir("data");
-#else
-        mkdir("data", 0755);
-#endif
         if(graphSaveToFiles(graph, "data/graphParams.txt", "data/graphVertex.txt", "data/graphEdge.txt"))
         {
                 printf("Graph saved successfully.\n");
