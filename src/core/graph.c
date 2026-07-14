@@ -385,6 +385,11 @@ void createGuideGraphEX(const ALGraph * graph,ALGraph * guidgraph,int n)
 
 void saveGraph(const ALGraph * graph)
 {
+#ifdef _WIN32
+        mkdir("data");
+#else
+        mkdir("data", 0755);
+#endif
         if(graphSaveToFiles(graph, "data/graphParams.txt", "data/graphVertex.txt", "data/graphEdge.txt"))
         {
                 printf("Graph saved successfully.\n");
