@@ -3,9 +3,10 @@
 #include "travels.h"
 #ifdef _WIN32
 #include <direct.h>
-#define mkdir(path) _mkdir(path)
+#define make_directory(path) _mkdir(path)
 #else
 #include <sys/stat.h>
+#define make_directory(path) mkdir(path, 0755)
 #endif
 
 double **parray = NULL;
@@ -391,7 +392,7 @@ void createGuideGraphEX(const ALGraph * graph,ALGraph * guidgraph,int n)
 
 void saveGraph(const ALGraph * graph)
 {
-        mkdir("data");
+        make_directory("data");
         if(graphSaveToFiles(graph, "data/graphParams.txt", "data/graphVertex.txt", "data/graphEdge.txt"))
         {
                 printf("Graph saved successfully.\n");

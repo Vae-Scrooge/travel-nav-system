@@ -41,12 +41,22 @@ PERF_SOURCES := tests/perf_benchmark.c \
 
 all: build
 
+ifeq ($(OS),Windows_NT)
+	MKDIR = mkdir
+	RMDIR = rd /s /q
+	CP = copy
+else
+	MKDIR = mkdir -p
+	RMDIR = rm -rf
+	CP = cp
+endif
+
 build:
-	mkdir -p $(BUILD_DIR)
+	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(APP_SOURCES) $(LDFLAGS) -o $(APP)
 
 test:
-	mkdir -p $(BUILD_DIR)
+	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(TEST_CFLAGS) $(TEST_SOURCES) $(LDFLAGS) -o $(TEST_BIN)
 	$(TEST_BIN)
 
@@ -55,14 +65,19 @@ coverage: LDFLAGS += --coverage
 coverage: clean test
 
 perf:
-	mkdir -p $(BUILD_DIR)
+	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(PERF_SOURCES) $(LDFLAGS) -o $(PERF_BIN)
 	$(PERF_BIN)
 
 dist: clean build
-	mkdir -p $(BUILD_DIR)/dist
-	cp $(APP) $(BUILD_DIR)/dist/
-	cp data/graphParams.txt data/graphVertex.txt data/graphEdge.txt data/user.txt $(BUILD_DIR)/dist/
+	$(MKDIR) $(BUILD_DIR)/dist
+	$(CP) $(APP) $(BUILD_DIR)/dist/
+	$(CP) data/graphParams.txt data/graphVertex.txt data/graphEdge.txt data/user.txt $(BUILD_DIR)/dist/
 
 clean:
-	rm -rf $(BUILD_DIR) *.gcda *.gcno *.gcov tests/*.gcda tests/*.gcno tests/*.gcov src/core/*.gcda src/core/*.gcno src/core/*.gcov src/console/*.gcda src/console/*.gcno src/console/*.gcov src/manager/*.gcda src/manager/*.gcno src/manager/*.gcov
+	-$(RMDIR) $(BUILD_DIR)
+	-del /q *.gcda *.gcno *.gcov 2>nul
+	-del /q tests\*.gcda tests\*.gcno tests\*.gcov 2>nul
+	-del /q src\core\*.gcda src\core\*.gcno src\core\*.gcov 2>nul
+	-del /q src\console\*.gcda src\console\*.gcno src\console\*.gcov 2>nul
+	-del /q src\manager\*.gcda src\manager\*.gcno src\manager\*.gcov 2>nul
