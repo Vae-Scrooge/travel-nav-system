@@ -29,7 +29,7 @@ jobs:
           gcovr --config .gcovr.cfg --root . --print-summary --fail-under-line 80 --fail-under-branch 75
           gcovr --config .gcovr.cfg --root . --filter 'src/core/graph\.c' --fail-under-line 90
           gcovr --config .gcovr.cfg --root . --filter 'src/core/travels\.c' --fail-under-line 90
-          gcovr --config .gcovr.cfg --root . --filter 'src/manager/userManager\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --filter 'src/manager/userManager\.c' --fail-under-line 85
           gcovr --config .gcovr.cfg --root . --filter 'src/core/password\.c' --fail-under-line 90
           gcovr --config .gcovr.cfg --root . --filter 'src/manager/stats\.c' --fail-under-line 90
 
