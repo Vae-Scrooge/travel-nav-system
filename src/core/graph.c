@@ -270,8 +270,6 @@ void freeMatrix(ALGraph *graph)
         (void)graph;
         if(parray == NULL)
         {
-                parray = NULL;
-                matrixNodeCount = 0;
                 return;
         }
         for(i = 0; i < matrixNodeCount; i++)
