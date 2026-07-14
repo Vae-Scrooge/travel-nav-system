@@ -65,4 +65,4 @@ dist: clean build
 	cp data/graphParams.txt data/graphVertex.txt data/graphEdge.txt data/user.txt $(BUILD_DIR)/dist/
 
 clean:
-	rm -rf $(BUILD_DIR) *.gcda *.gcno *.gcov tests/*.gcda tests/*.gcno tests/*.gcov
+	rm -rf $(BUILD_DIR) *.gcda *.gcno *.gcov tests/*.gcda tests/*.gcno tests/*.gcov src/core/*.gcda src/core/*.gcno src/core/*.gcov src/console/*.gcda src/console/*.gcno src/console/*.gcov src/manager/*.gcda src/manager/*.gcno src/manager/*.gcov

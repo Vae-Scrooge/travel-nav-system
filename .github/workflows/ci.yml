@@ -26,12 +26,12 @@ jobs:
       - name: Coverage
         run: |
           make coverage
-          gcovr --config .gcovr.cfg --print-summary --fail-under-line 80 --fail-under-branch 80
-          gcovr --config .gcovr.cfg --filter '.*graph\.c' --fail-under-line 90
-          gcovr --config .gcovr.cfg --filter '.*travels\.c' --fail-under-line 90
-          gcovr --config .gcovr.cfg --filter '.*userManager\.c' --fail-under-line 90
-          gcovr --config .gcovr.cfg --filter '.*password\.c' --fail-under-line 90
-          gcovr --config .gcovr.cfg --filter '.*stats\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --print-summary --fail-under-line 80 --fail-under-branch 80
+          gcovr --config .gcovr.cfg --root . --filter 'src/core/graph\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --filter 'src/core/travels\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --filter 'src/manager/userManager\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --filter 'src/core/password\.c' --fail-under-line 90
+          gcovr --config .gcovr.cfg --root . --filter 'src/manager/stats\.c' --fail-under-line 90
 
       - name: Static analysis
         run: cppcheck --std=c11 --enable=warning,style,performance,portability --error-exitcode=1 src/core/graph.c src/core/travels.c src/core/password.c src/manager/userManager.c src/manager/stats.c
