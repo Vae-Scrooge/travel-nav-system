@@ -76,8 +76,8 @@ dist: clean build
 
 clean:
 	-$(RMDIR) $(BUILD_DIR)
-	-del /q *.gcda *.gcno *.gcov 2>nul
-	-del /q tests\*.gcda tests\*.gcno tests\*.gcov 2>nul
-	-del /q src\core\*.gcda src\core\*.gcno src\core\*.gcov 2>nul
-	-del /q src\console\*.gcda src\console\*.gcno src\console\*.gcov 2>nul
-	-del /q src\manager\*.gcda src\manager\*.gcno src\manager\*.gcov 2>nul
+	-$(RM) *.gcda *.gcno *.gcov
+	-$(RM) tests/*.gcda tests/*.gcno tests/*.gcov
+	-$(RM) src/core/*.gcda src/core/*.gcno src/core/*.gcov
+	-$(RM) src/console/*.gcda src/console/*.gcno src/console/*.gcov
+	-$(RM) src/manager/*.gcda src/manager/*.gcno src/manager/*.gcov
