@@ -34,4 +34,4 @@ jobs:
           gcovr --config .gcovr.cfg --filter '.*stats\.c' --fail-under-line 90
 
       - name: Static analysis
-        run: cppcheck --std=c11 --enable=warning,style,performance,portability --error-exitcode=1 graph.c travels.c userManager.c password.c stats.c
+        run: cppcheck --std=c11 --enable=warning,style,performance,portability --error-exitcode=1 src/core/graph.c src/core/travels.c src/core/password.c src/manager/userManager.c src/manager/stats.c
